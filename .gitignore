@@ -1,0 +1,5 @@
+#
+
+dist
+packages/*/src/gen
+node_modules
