@@ -1,11 +1,15 @@
-import { DoctorClient, DoctorClientConfig } from './client'
+import { DoctorClient, DoctorClientConfig, ExistingSessionInfo } from './client'
 
-export function installWebBase(config: DoctorClientConfig): DoctorClient {
-  if (window == undefined) {
+export function installWebBase(
+  config: DoctorClientConfig,
+  existingSession?: ExistingSessionInfo
+): DoctorClient {
+  if (typeof window == 'undefined') {
     throw Error('Not running in a browser!')
   }
 
-  const client = new DoctorClient(config)
+  DoctorClient.init(config, existingSession)
+  const client = DoctorClient.get()
 
   window.addEventListener('error', (e) => {
     client.recordLog('error', e.error, {})
@@ -29,5 +33,5 @@ export function installWebBase(config: DoctorClientConfig): DoctorClient {
     client.recordClick(querySelector, el.innerText)
   })
 
-  return client
+  return DoctorClient.get()
 }

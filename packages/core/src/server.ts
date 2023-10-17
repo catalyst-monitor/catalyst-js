@@ -1,62 +1,44 @@
 import {
   SESSION_ID_HEADER,
+  Severity,
   objectToParams,
   toProtoSeverity,
-  Severity,
 } from './common'
 import {
-  SendFrontendEventsRequest,
-  SendFrontendEventsRequest_Event,
+  SendBackendEventsRequest,
+  SendBackendEventsRequest_Event,
+  TraceInfo,
 } from './gen/library'
 
-export interface DoctorClientConfig {
+export interface DoctorServerConfig {
   baseUrl: string
   version: string
   systemName: string
-  userAgent?: string
-  publicKey?: string
-  privateKey?: string
+  privateKey: string
 }
 
-export interface ExistingSessionInfo {
-  existingSessionId?: string
-  loggedInEmail?: string
-  loggedInId?: string
-}
+export class DoctorServer {
+  private static instance: DoctorServer | null = null
 
-export class DoctorClient {
-  private static instance: DoctorClient | null = null
-
-  static init(
-    config: DoctorClientConfig,
-    sessionInfo?: ExistingSessionInfo
-  ): DoctorClient {
-    if (DoctorClient.instance == null) {
-      DoctorClient.instance = new DoctorClient(config, sessionInfo)
+  static init(config: DoctorServerConfig): DoctorServer {
+    if (DoctorServer.instance == null) {
+      DoctorServer.instance = new DoctorServer(config)
     }
-    return DoctorClient.instance
+    return DoctorServer.instance
   }
 
-  static get(): DoctorClient {
-    if (DoctorClient.instance == null) {
+  static get(): DoctorServer {
+    if (DoctorServer.instance == null) {
       throw Error('Must create instance first!')
     }
-    return DoctorClient.instance
+    return DoctorServer.instance
   }
 
   readonly sessionId: string
-  private eventQueue: SendFrontendEventsRequest_Event[] = []
-  private loggedInEmail: string | null
-  private loggedInId: string | null
-  private currentPageViewId: string | null = null
+  private eventQueue: SendBackendEventsRequest_Event[] = []
 
-  constructor(
-    public readonly config: DoctorClientConfig,
-    sessionInfo?: ExistingSessionInfo
-  ) {
-    this.sessionId = sessionInfo?.existingSessionId ?? crypto.randomUUID()
-    this.loggedInEmail = sessionInfo?.loggedInEmail ?? null
-    this.loggedInId = sessionInfo?.loggedInId ?? null
+  constructor(public readonly config: DoctorServerConfig) {
+    this.sessionId = crypto.randomUUID()
     setInterval(() => {
       this.flushEvents()
     }, 5 * 1000)
@@ -72,21 +54,17 @@ export class DoctorClient {
     // We cannot leave the fetch uncaught, otherwise, it will
     // generate a log message that we then need to send the next time.
     try {
-      await fetch(`${this.config.baseUrl}/api/ingest/fe`, {
+      await fetch(`${this.config.baseUrl}/api/ingest/be`, {
         method: 'put',
-        body: SendFrontendEventsRequest.encode({
+        body: SendBackendEventsRequest.encode({
           events: copy,
           info: {
             name: this.config.systemName,
-            loggedInEmail: this.loggedInEmail ?? '',
-            loggedInId: this.loggedInId ?? '',
-            sessionId: this.sessionId,
-            userAgent: this.config.userAgent ?? '',
             version: this.config.version,
           },
         }).finish(),
         headers: {
-          ['X-DOCTOR-PUBLIC-KEY']: this.config.publicKey || '',
+          ['X-DOCTOR-PRIVATE-KEY']: this.config.privateKey,
         },
       })
     } catch (e) {
@@ -99,44 +77,27 @@ export class DoctorClient {
     }
   }
 
-  setUserCreds({
-    loggedInEmail,
-    loggedInId,
-  }: {
-    loggedInEmail: string
-    loggedInId: string
-  }) {
-    this.loggedInEmail = loggedInEmail
-    this.loggedInId = loggedInId
-  }
-
   getFetchHeaders(): { [SESSION_ID_HEADER]: string } {
     return {
       [SESSION_ID_HEADER]: this.sessionId,
     }
   }
 
-  recordPageView(pattern: string, args: { [key: string]: string | string[] }) {
-    this.currentPageViewId = crypto.randomUUID()
+  recordFetch(
+    pattern: string,
+    args: { [key: string]: string },
+    duration: { seconds: number; nanos: number },
+    context: ServerRequestContext
+  ) {
     this.eventQueue.push({
-      pageViewId: this.currentPageViewId,
-      pageView: {
-        time: new Date(),
+      traceInfo: contextToTrace(context),
+      fetch: {
         path: {
           pattern,
           params: objectToParams(args),
         },
-      },
-    })
-  }
-
-  recordClick(selector: string, text: string) {
-    this.eventQueue.push({
-      pageViewId: this.currentPageViewId ?? '',
-      click: {
-        id: crypto.randomUUID(),
-        buttonText: text,
-        selector: selector,
+        requestDuration: duration,
+        statusCode: 0,
         time: new Date(),
       },
     })
@@ -145,7 +106,8 @@ export class DoctorClient {
   recordLog(
     severity: Severity,
     message: unknown,
-    args: { [key: string | number]: string | number }
+    args: { [key: string | number]: string | number },
+    context: ServerRequestContext
   ) {
     let messageStr: string
     let stack: string | null = null
@@ -160,7 +122,7 @@ export class DoctorClient {
       messageStr = '' + message
     }
     this.eventQueue.push({
-      pageViewId: this.currentPageViewId ?? '',
+      traceInfo: contextToTrace(context),
       log: {
         id: crypto.randomUUID(),
         message: messageStr,
@@ -183,5 +145,25 @@ export class DoctorClient {
         }),
       },
     })
+  }
+}
+
+export interface ServerRequestContext {
+  fetchId: string
+  sessionId: string
+  loggedInEmail?: string
+  loggedInId?: string
+  pageViewId?: string
+  parentFetchId?: string
+}
+
+function contextToTrace(context: ServerRequestContext): TraceInfo {
+  return {
+    fetchId: context.fetchId,
+    sessionId: context.sessionId,
+    loggedInEmail: context.loggedInEmail ?? '',
+    loggedInId: context.loggedInId ?? '',
+    pageViewId: context.pageViewId ?? '',
+    parentFetchId: context.parentFetchId ?? '',
   }
 }
