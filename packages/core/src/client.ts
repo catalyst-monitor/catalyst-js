@@ -1,44 +1,54 @@
 import {
-  LogSeverity,
+  SESSION_ID_HEADER,
+  objectToParams,
+  toProtoSeverity,
+  Severity,
+} from './common'
+import {
   SendFrontendEventsRequest,
   SendFrontendEventsRequest_Event,
 } from './gen/library'
 
-const SESSION_ID_HEADER = 'X-Doctor-SessionId'
-
-export type Severity = 'info' | 'warn' | 'error'
-
-function toProtoSeverity(severity: Severity): LogSeverity {
-  switch (severity) {
-    case 'info':
-      return LogSeverity.INFO_LOG_SEVERITY
-    case 'warn':
-      return LogSeverity.WARNING_LOG_SEVERITY
-    case 'error':
-      return LogSeverity.ERROR_LOG_SEVERITY
-  }
-}
-
 export interface DoctorClientConfig {
   baseUrl: string
-  loggedInEmail?: string
-  loggedInId?: string
-  userAgent: string
   version: string
   systemName: string
+  userAgent?: string
+  publicKey?: string
+  privateKey?: string
+}
+
+export interface ExistingSessionInfo {
+  existingSessionId?: string
+  loggedInEmail?: string
+  loggedInId?: string
 }
 
 export class DoctorClient {
+  private static instance: DoctorClient | null = null
+  static create(config: DoctorClientConfig, sessionInfo?: ExistingSessionInfo) {
+    DoctorClient.instance = new DoctorClient(config, sessionInfo)
+  }
+  static get(): DoctorClient {
+    if (DoctorClient.instance == null) {
+      throw Error('Must create instance first!')
+    }
+    return DoctorClient.instance
+  }
+
   readonly sessionId: string
   private eventQueue: SendFrontendEventsRequest_Event[] = []
   private loggedInEmail: string | null
   private loggedInId: string | null
   private currentPageViewId: string | null = null
 
-  constructor(public readonly config: DoctorClientConfig) {
-    this.sessionId = crypto.randomUUID()
-    this.loggedInEmail = config.loggedInEmail ?? null
-    this.loggedInId = config.loggedInId ?? null
+  constructor(
+    public readonly config: DoctorClientConfig,
+    sessionInfo?: ExistingSessionInfo
+  ) {
+    this.sessionId = sessionInfo?.existingSessionId ?? crypto.randomUUID()
+    this.loggedInEmail = sessionInfo?.loggedInEmail ?? null
+    this.loggedInId = sessionInfo?.loggedInId ?? null
     setInterval(() => {
       this.flushEvents()
     }, 5 * 1000)
@@ -50,6 +60,13 @@ export class DoctorClient {
     }
     const copy = [...this.eventQueue]
     this.eventQueue = []
+
+    const authHeaders: { [key: string]: string } = {}
+    if (this.config.publicKey != null) {
+      authHeaders['X-DOCTOR-PUBLIC-KEY'] = this.config.publicKey
+    } else if (this.config.privateKey != null) {
+      authHeaders['X-DOCTOR-PRIVATE-KEY'] = this.config.privateKey
+    }
     await fetch(`${this.config.baseUrl}/api/ingest/fe`, {
       body: SendFrontendEventsRequest.encode({
         events: copy,
@@ -58,10 +75,11 @@ export class DoctorClient {
           loggedInEmail: this.loggedInEmail ?? '',
           loggedInId: this.loggedInId ?? '',
           sessionId: this.sessionId,
-          userAgent: this.config.userAgent,
+          userAgent: this.config.userAgent ?? '',
           version: this.config.version,
         },
       }).finish(),
+      headers: authHeaders,
     })
   }
 
@@ -90,10 +108,7 @@ export class DoctorClient {
         time: new Date(),
         path: {
           pattern,
-          params: Object.entries(args).map((entry) => ({
-            paramName: entry[0],
-            argValue: entry[1],
-          })),
+          params: objectToParams(args),
         },
       },
     })
@@ -113,7 +128,7 @@ export class DoctorClient {
 
   recordLog(
     severity: Severity,
-    message: string | Error,
+    message: unknown,
     args: { [key: string | number]: string | number }
   ) {
     let messageStr: string
@@ -123,8 +138,10 @@ export class DoctorClient {
       if ('stack' in message) {
         stack = message.stack ?? null
       }
-    } else {
+    } else if (typeof message == 'string') {
       messageStr = message
+    } else {
+      messageStr = '' + message
     }
     this.eventQueue.push({
       pageViewId: this.currentPageViewId ?? '',

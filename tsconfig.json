@@ -5,7 +5,9 @@
         "strictNullChecks": true,
         "esModuleInterop": true,
         "moduleResolution": "node",
-        "allowJs": true
+        "allowJs": true,
+        "module": "commonjs",
+        "declaration": true
     },
     "files": [],
     "include": [],

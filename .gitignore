@@ -1,5 +1,8 @@
 #
 
 dist
-packages/*/src/gen
 node_modules
+*.tsbuildinfo
+yarn-error.log
+
+packages/*/src/gen
