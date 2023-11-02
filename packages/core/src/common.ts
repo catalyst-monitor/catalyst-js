@@ -3,6 +3,8 @@ import { LogSeverity } from './gen/library'
 
 export const SESSION_ID_HEADER = 'X-Doctor-SessionId'
 
+export const COOKIE_NAME = 'codedoctorsession'
+
 export type Severity = 'info' | 'warn' | 'error'
 
 export function toProtoSeverity(severity: Severity): LogSeverity {

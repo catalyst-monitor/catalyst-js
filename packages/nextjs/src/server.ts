@@ -3,11 +3,31 @@ import {
   ServerRequestContext,
   createDoctorContext,
   getDoctorContext,
+  COOKIE_NAME,
 } from '@doctor/javascript-core'
+import { cookies } from 'next/headers'
 import { Fragment, createElement } from 'react'
 import { DoctorClientInstaller } from './client'
+import { NextRequest } from 'next/dist/server/web/spec-extension/request'
+import { NextResponse } from 'next/dist/server/web/spec-extension/response'
 
 export function wrapRouteHandler() {}
+
+export function wrapMiddleware(
+  mw: (request: NextRequest) => NextResponse
+): (request: NextRequest) => NextResponse {
+  return (request: NextRequest) => {
+    const resp = mw(request)
+    const cookie = request.cookies.get(COOKIE_NAME)
+    if (cookie == null) {
+      resp.cookies.set(COOKIE_NAME, crypto.randomUUID(), {
+        sameSite: 'strict',
+        expires: 0,
+      })
+    }
+    return resp
+  }
+}
 
 export function wrapUseServerPage<
   T extends React.ReactNode | Promise<React.ReactNode>,
@@ -54,12 +74,24 @@ export function DoctorWrapper({
     fetchId: crypto.randomUUID(),
     sessionId: crypto.randomUUID(),
   }
-  const doctorServer = DoctorServer.init({
-    baseUrl,
-    privateKey,
-    systemName,
-    version,
-  })
+  const cookieStore = cookies()
+  let cookie = cookieStore.get(COOKIE_NAME)?.value
+  if (cookie == null) {
+    cookie = crypto.randomUUID()
+    cookieStore.set(COOKIE_NAME, cookie, {
+      sameSite: 'strict',
+      expires: 0,
+    })
+  }
+  const doctorServer = DoctorServer.init(
+    {
+      baseUrl,
+      privateKey,
+      systemName,
+      version,
+    },
+    cookie
+  )
   return createDoctorContext(newContext, () =>
     createElement(
       Fragment,

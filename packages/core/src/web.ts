@@ -1,14 +1,23 @@
-import { DoctorClient, DoctorClientConfig, ExistingSessionInfo } from './client'
+import { DoctorClient, DoctorClientConfig } from './client'
+import { COOKIE_NAME } from './common'
 
-export function installWebBase(
-  config: DoctorClientConfig,
-  existingSession?: ExistingSessionInfo
-): DoctorClient {
+export function installWebBase(config: DoctorClientConfig): DoctorClient {
   if (typeof window == 'undefined') {
     throw Error('Not running in a browser!')
   }
 
-  DoctorClient.init(config, existingSession)
+  let existing = null
+  const cookieMatch = document.cookie.match(
+    `(?:^|;)\\s*${COOKIE_NAME}\\s*=\\s*([^;]+)`
+  )
+  if (cookieMatch != null) {
+    existing = cookieMatch[1]
+  } else {
+    existing = crypto.randomUUID()
+    document.cookie = `${COOKIE_NAME}=${existing}; Expires=0; SameSite=Strict`
+  }
+
+  DoctorClient.init(config, existing)
   const client = DoctorClient.get()
 
   window.addEventListener('error', (e) => {
@@ -18,7 +27,7 @@ export function installWebBase(
     client.recordLog('error', e.reason, {})
   })
   document.body.addEventListener('click', (e) => {
-    const el = e.currentTarget
+    const el = e.target
 
     if (!(el instanceof HTMLElement)) {
       return
@@ -30,7 +39,14 @@ export function installWebBase(
     if (el.classList.length > 0) {
       querySelector += [...el.classList].map((c) => `.${c}`).join('')
     }
-    client.recordClick(querySelector, el.innerText)
+    let cleanedText = el.innerText
+    const newlineIdx = cleanedText.indexOf('\n')
+    if (newlineIdx != -1 || cleanedText.length > 200) {
+      cleanedText =
+        cleanedText.slice(0, Math.min(cleanedText.indexOf('\n'), 200)) + '...'
+    }
+
+    client.recordClick(querySelector, cleanedText)
   })
 
   return DoctorClient.get()

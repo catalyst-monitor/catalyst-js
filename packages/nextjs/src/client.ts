@@ -43,20 +43,13 @@ export function DoctorClientInstaller({
   const params = useParams()
 
   useLayoutEffect(() => {
-    installWebBase(
-      {
-        baseUrl,
-        systemName: systemName,
-        userAgent: window.navigator.userAgent,
-        version: version,
-        publicKey,
-      },
-      {
-        existingSessionId: sessionId,
-        loggedInEmail,
-        loggedInId,
-      }
-    )
+    installWebBase({
+      baseUrl,
+      systemName: systemName,
+      userAgent: window.navigator.userAgent,
+      version: version,
+      publicKey,
+    })
   }, [
     baseUrl,
     publicKey,
@@ -70,9 +63,15 @@ export function DoctorClientInstaller({
     let rawPath = pathname
     for (const entry of Object.entries(params)) {
       if (Array.isArray(entry[1])) {
-        rawPath = rawPath.replace(entry[1].join('/'), `[...${entry[0]}]`)
+        rawPath = rawPath.replace(
+          new RegExp(`/${entry[1].join('/')}(:?$|/)`),
+          `/[...${entry[0]}]`
+        )
       } else {
-        rawPath = rawPath.replace(entry[1], `[${entry[0]}]`)
+        rawPath = rawPath.replace(
+          new RegExp(`/${entry[1]}(:?$|/)`),
+          `/[${entry[0]}]`
+        )
       }
     }
     DoctorClient.get().recordPageView(rawPath, params)

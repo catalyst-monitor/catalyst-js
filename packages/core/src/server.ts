@@ -20,9 +20,9 @@ export interface DoctorServerConfig {
 export class DoctorServer {
   private static instance: DoctorServer | null = null
 
-  static init(config: DoctorServerConfig): DoctorServer {
+  static init(config: DoctorServerConfig, sessionId: string): DoctorServer {
     if (DoctorServer.instance == null) {
-      DoctorServer.instance = new DoctorServer(config)
+      DoctorServer.instance = new DoctorServer(config, sessionId)
     }
     return DoctorServer.instance
   }
@@ -34,11 +34,12 @@ export class DoctorServer {
     return DoctorServer.instance
   }
 
-  readonly sessionId: string
   private eventQueue: SendBackendEventsRequest_Event[] = []
 
-  constructor(public readonly config: DoctorServerConfig) {
-    this.sessionId = crypto.randomUUID()
+  constructor(
+    public readonly config: DoctorServerConfig,
+    readonly sessionId: string
+  ) {
     setInterval(() => {
       this.flushEvents()
     }, 5 * 1000)

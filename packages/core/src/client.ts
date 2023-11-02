@@ -18,21 +18,12 @@ export interface DoctorClientConfig {
   privateKey?: string
 }
 
-export interface ExistingSessionInfo {
-  existingSessionId?: string
-  loggedInEmail?: string
-  loggedInId?: string
-}
-
 export class DoctorClient {
   private static instance: DoctorClient | null = null
 
-  static init(
-    config: DoctorClientConfig,
-    sessionInfo?: ExistingSessionInfo
-  ): DoctorClient {
+  static init(config: DoctorClientConfig, sessionId: string): DoctorClient {
     if (DoctorClient.instance == null) {
-      DoctorClient.instance = new DoctorClient(config, sessionInfo)
+      DoctorClient.instance = new DoctorClient(config, sessionId)
     }
     return DoctorClient.instance
   }
@@ -44,7 +35,6 @@ export class DoctorClient {
     return DoctorClient.instance
   }
 
-  readonly sessionId: string
   private eventQueue: SendFrontendEventsRequest_Event[] = []
   private loggedInEmail: string | null
   private loggedInId: string | null
@@ -52,11 +42,10 @@ export class DoctorClient {
 
   constructor(
     public readonly config: DoctorClientConfig,
-    sessionInfo?: ExistingSessionInfo
+    public readonly sessionId: string
   ) {
-    this.sessionId = sessionInfo?.existingSessionId ?? crypto.randomUUID()
-    this.loggedInEmail = sessionInfo?.loggedInEmail ?? null
-    this.loggedInId = sessionInfo?.loggedInId ?? null
+    this.loggedInEmail = null
+    this.loggedInId = null
     setInterval(() => {
       this.flushEvents()
     }, 5 * 1000)
