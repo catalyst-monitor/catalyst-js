@@ -1,14 +1,15 @@
 {
   "name": "@doctor/javascript-core",
   "version": "0.0.1",
-  "main": "dist/index.js",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
   "license": "MIT",
-  "types": "dist/index.d.ts",
+  "types": "dist/esm/index.d.ts",
   "files": [
     "/dist"
   ],
   "scripts": {
-    "build": "rm -rf dist && rm tsconfig.tsbuildinfo && tsc -p ."
+    "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.7.3",
