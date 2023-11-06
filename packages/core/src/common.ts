@@ -2,6 +2,8 @@ import { Path_Param } from './gen/common'
 import { LogSeverity } from './gen/library'
 
 export const SESSION_ID_HEADER = 'X-Doctor-SessionId'
+export const PARENT_FETCH_ID_HEADER = 'X-Doctor-ParentFetchId'
+export const PAGE_VIEW_ID_HEADER = 'X-Doctor-PageViewId'
 
 export const COOKIE_NAME = 'codedoctorsession'
 

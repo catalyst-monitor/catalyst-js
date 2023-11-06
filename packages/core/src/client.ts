@@ -3,6 +3,7 @@ import {
   objectToParams,
   toProtoSeverity,
   Severity,
+  PAGE_VIEW_ID_HEADER,
 } from './common'
 import {
   SendFrontendEventsRequest,
@@ -15,7 +16,11 @@ export interface DoctorClientConfig {
   systemName: string
   userAgent?: string
   publicKey?: string
-  privateKey?: string
+}
+
+export interface ClientFetchHeaders {
+  [SESSION_ID_HEADER]: string
+  [PAGE_VIEW_ID_HEADER]?: string
 }
 
 export class DoctorClient {
@@ -99,10 +104,14 @@ export class DoctorClient {
     this.loggedInId = loggedInId
   }
 
-  getFetchHeaders(): { [SESSION_ID_HEADER]: string } {
-    return {
+  getFetchHeaders(): ClientFetchHeaders {
+    const headers: ClientFetchHeaders = {
       [SESSION_ID_HEADER]: this.sessionId,
     }
+    if (this.currentPageViewId != null) {
+      headers[PAGE_VIEW_ID_HEADER] = this.currentPageViewId
+    }
+    return headers
   }
 
   recordPageView(pattern: string, args: { [key: string]: string | string[] }) {

@@ -1,5 +1,23 @@
 import type { AsyncLocalStorage } from 'async_hooks'
-import { ServerRequestContext } from './server'
+import { DoctorServer, ServerRequestContext } from './server'
+
+export function catalystNodeFetch(
+  input: RequestInfo | URL,
+  init?: RequestInit | undefined
+): Promise<Response> {
+  const context = getDoctorContext()
+  if (context == null) {
+    throw new Error('Tried to fetch without context!')
+  }
+  const newInit: RequestInit = {
+    ...(init ?? {}),
+    headers: {
+      ...(init?.headers ?? {}),
+      ...DoctorServer.get().getFetchHeaders(context),
+    },
+  }
+  return fetch(input, newInit)
+}
 
 let doctorContextStorage: AsyncLocalStorage<DoctorContextType> | null = null
 try {

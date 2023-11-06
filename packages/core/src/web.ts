@@ -1,6 +1,20 @@
 import { DoctorClient, DoctorClientConfig } from './client'
 import { COOKIE_NAME } from './common'
 
+export function catalystWebFetch(
+  input: RequestInfo | URL,
+  init?: RequestInit | undefined
+): Promise<Response> {
+  const newInit: RequestInit = {
+    ...(init ?? {}),
+    headers: {
+      ...(init?.headers ?? {}),
+      ...DoctorClient.get().getFetchHeaders(),
+    },
+  }
+  return fetch(input, newInit)
+}
+
 export function installWebBase(config: DoctorClientConfig): DoctorClient {
   if (typeof window == 'undefined') {
     throw Error('Not running in a browser!')

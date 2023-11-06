@@ -1,4 +1,5 @@
 import {
+  PARENT_FETCH_ID_HEADER,
   SESSION_ID_HEADER,
   Severity,
   objectToParams,
@@ -9,6 +10,7 @@ import {
   SendBackendEventsRequest_Event,
   TraceInfo,
 } from './gen/library'
+import crypto from 'crypto'
 
 export interface DoctorServerConfig {
   baseUrl: string
@@ -17,12 +19,17 @@ export interface DoctorServerConfig {
   privateKey: string
 }
 
+export interface ServerFetchHeaders {
+  [SESSION_ID_HEADER]: string
+  [PARENT_FETCH_ID_HEADER]: string
+}
+
 export class DoctorServer {
   private static instance: DoctorServer | null = null
 
-  static init(config: DoctorServerConfig, sessionId: string): DoctorServer {
+  static init(config: DoctorServerConfig): DoctorServer {
     if (DoctorServer.instance == null) {
-      DoctorServer.instance = new DoctorServer(config, sessionId)
+      DoctorServer.instance = new DoctorServer(config)
     }
     return DoctorServer.instance
   }
@@ -36,10 +43,7 @@ export class DoctorServer {
 
   private eventQueue: SendBackendEventsRequest_Event[] = []
 
-  constructor(
-    public readonly config: DoctorServerConfig,
-    readonly sessionId: string
-  ) {
+  constructor(public readonly config: DoctorServerConfig) {
     setInterval(() => {
       this.flushEvents()
     }, 5 * 1000)
@@ -78,15 +82,17 @@ export class DoctorServer {
     }
   }
 
-  getFetchHeaders(): { [SESSION_ID_HEADER]: string } {
+  getFetchHeaders(context: ServerRequestContext): ServerFetchHeaders {
     return {
-      [SESSION_ID_HEADER]: this.sessionId,
+      [SESSION_ID_HEADER]: context.sessionId,
+      [PARENT_FETCH_ID_HEADER]: context.fetchId,
     }
   }
 
   recordFetch(
     pattern: string,
     args: { [key: string]: string },
+    statusCode: number,
     duration: { seconds: number; nanos: number },
     context: ServerRequestContext
   ) {
@@ -98,8 +104,8 @@ export class DoctorServer {
           params: objectToParams(args),
         },
         requestDuration: duration,
-        statusCode: 0,
-        time: new Date(),
+        statusCode,
+        endTime: new Date(),
       },
     })
   }
