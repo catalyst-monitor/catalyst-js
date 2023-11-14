@@ -29,3 +29,19 @@ export function objectToParams(args: {
     argValue: Array.isArray(entry[1]) ? entry[1].join('/') : entry[1],
   }))
 }
+
+export function parseConsoleArgs(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): [string, { [key: number]: any }] | null {
+  if (data.length == 0) {
+    return null
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const logArgs: { [key: number]: any } = {}
+  for (let i = 1; i < data.length; i++) {
+    logArgs[i] = data[i]
+  }
+  return [data[0], logArgs]
+}

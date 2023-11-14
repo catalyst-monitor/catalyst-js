@@ -53,7 +53,7 @@ export class DoctorClient {
     this.loggedInId = null
     setInterval(() => {
       this.flushEvents()
-    }, 5 * 1000)
+    }, 1000)
   }
 
   async flushEvents() {
@@ -84,12 +84,21 @@ export class DoctorClient {
         },
       })
     } catch (e) {
-      console.error(
-        'Could not report events!',
-        e,
-        'Dropping the following events',
-        copy
-      )
+      if (window.console.__catalystOldError != null) {
+        window.console.__catalystOldError(
+          'Could not report events!',
+          e,
+          'Dropping the following events',
+          copy
+        )
+      } else {
+        console.error(
+          'Could not report events!',
+          e,
+          'Dropping the following events',
+          copy
+        )
+      }
     }
   }
 
@@ -102,6 +111,10 @@ export class DoctorClient {
   }) {
     this.loggedInEmail = loggedInEmail
     this.loggedInId = loggedInId
+  }
+
+  get pageViewId() {
+    return this.currentPageViewId
   }
 
   getFetchHeaders(): ClientFetchHeaders {

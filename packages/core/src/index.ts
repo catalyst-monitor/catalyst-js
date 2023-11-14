@@ -18,4 +18,5 @@ export {
   updateDoctorContext,
   getDoctorContext,
   catalystNodeFetch,
+  installNodeBase,
 } from './node'

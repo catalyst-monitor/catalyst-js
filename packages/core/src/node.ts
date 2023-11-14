@@ -1,5 +1,10 @@
 import type { AsyncLocalStorage } from 'async_hooks'
-import { DoctorServer, ServerRequestContext } from './server'
+import {
+  DoctorServer,
+  DoctorServerConfig,
+  ServerRequestContext,
+} from './server'
+import { Severity, parseConsoleArgs } from './common'
 
 export function catalystNodeFetch(
   input: RequestInfo | URL,
@@ -17,6 +22,54 @@ export function catalystNodeFetch(
     },
   }
   return fetch(input, newInit)
+}
+
+declare global {
+  // Must be var for global declaration.
+  // eslint-disable-next-line no-var
+  var __catalystHasBeenInstantiated: boolean | undefined
+
+  interface Console {
+    __catalystOldLog: typeof window.console.log | undefined
+    __catalystOldWarn: typeof window.console.warn | undefined
+    __catalystOldError: typeof window.console.error | undefined
+  }
+}
+
+export function installNodeBase(config: DoctorServerConfig): DoctorServer {
+  if (globalThis.__catalystHasBeenInstantiated == true) {
+    if (globalThis.console.__catalystOldWarn != null) {
+      globalThis.console.__catalystOldWarn(
+        'Catalyst has already been instantiated!'
+      )
+    }
+  }
+
+  const server = DoctorServer.init(config)
+
+  globalThis.console.__catalystOldLog = globalThis.console.log
+  globalThis.console.__catalystOldWarn = globalThis.console.warn
+  globalThis.console.__catalystOldError = globalThis.console.error
+
+  globalThis.console.log = buildNewConsoleMethod(
+    globalThis.console.__catalystOldLog,
+    server,
+    'info'
+  )
+  globalThis.console.warn = buildNewConsoleMethod(
+    globalThis.console.__catalystOldWarn,
+    server,
+    'warn'
+  )
+  globalThis.console.error = buildNewConsoleMethod(
+    globalThis.console.__catalystOldError,
+    server,
+    'error'
+  )
+
+  globalThis.__catalystHasBeenInstantiated = true
+
+  return DoctorServer.get()
 }
 
 let doctorContextStorage: AsyncLocalStorage<DoctorContextType> | null = null
@@ -63,4 +116,24 @@ export function getDoctorContext(): ServerRequestContext | undefined {
     return
   }
   return doctorContextStorage.getStore()?.context
+}
+
+function buildNewConsoleMethod(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  old: (...d: any[]) => void,
+  server: DoctorServer,
+  severity: Severity
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): (...d: any[]) => void {
+  return (...data) => {
+    old(...data)
+    const context = getDoctorContext()
+    if (context == null) {
+      return
+    }
+    const parsed = parseConsoleArgs(data)
+    if (parsed != null) {
+      server.recordLog(severity, parsed[0], parsed[1], context)
+    }
+  }
 }

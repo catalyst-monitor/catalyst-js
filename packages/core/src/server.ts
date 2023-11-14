@@ -46,7 +46,7 @@ export class DoctorServer {
   constructor(public readonly config: DoctorServerConfig) {
     setInterval(() => {
       this.flushEvents()
-    }, 5 * 1000)
+    }, 1000)
   }
 
   async flushEvents() {
