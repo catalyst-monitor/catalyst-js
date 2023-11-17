@@ -90,6 +90,7 @@ export class DoctorServer {
   }
 
   recordFetch(
+    method: string,
     pattern: string,
     args: { [key: string]: string },
     statusCode: number,
@@ -99,6 +100,7 @@ export class DoctorServer {
     this.eventQueue.push({
       traceInfo: contextToTrace(context),
       fetch: {
+        method: method.toLowerCase(),
         path: {
           pattern,
           params: objectToParams(args),
