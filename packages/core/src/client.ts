@@ -4,14 +4,16 @@ import {
   toProtoSeverity,
   Severity,
   PAGE_VIEW_ID_HEADER,
+  DEFAULT_BASE_URL,
+  PUBLIC_KEY_HEADER,
 } from './common'
 import {
   SendFrontendEventsRequest,
   SendFrontendEventsRequest_Event,
 } from './gen/library'
 
-export interface DoctorClientConfig {
-  baseUrl: string
+export interface CatalystClientConfig {
+  baseUrl?: string
   version: string
   systemName: string
   userAgent?: string
@@ -23,34 +25,36 @@ export interface ClientFetchHeaders {
   [PAGE_VIEW_ID_HEADER]?: string
 }
 
-export class DoctorClient {
-  private static instance: DoctorClient | null = null
+export class CatalystClient {
+  private static instance: CatalystClient | null = null
 
-  static init(config: DoctorClientConfig, sessionId: string): DoctorClient {
-    if (DoctorClient.instance == null) {
-      DoctorClient.instance = new DoctorClient(config, sessionId)
+  static init(config: CatalystClientConfig, sessionId: string): CatalystClient {
+    if (CatalystClient.instance == null) {
+      CatalystClient.instance = new CatalystClient(config, sessionId)
     }
-    return DoctorClient.instance
+    return CatalystClient.instance
   }
 
-  static get(): DoctorClient {
-    if (DoctorClient.instance == null) {
+  static get(): CatalystClient {
+    if (CatalystClient.instance == null) {
       throw Error('Must create instance first!')
     }
-    return DoctorClient.instance
+    return CatalystClient.instance
   }
 
   private eventQueue: SendFrontendEventsRequest_Event[] = []
   private loggedInEmail: string | null
   private loggedInId: string | null
   private currentPageViewId: string | null = null
+  private baseUrl: string
 
   constructor(
-    public readonly config: DoctorClientConfig,
+    public readonly config: CatalystClientConfig,
     public readonly sessionId: string
   ) {
     this.loggedInEmail = null
     this.loggedInId = null
+    this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL
     setInterval(() => {
       this.flushEvents()
     }, 1000)
@@ -66,7 +70,7 @@ export class DoctorClient {
     // We cannot leave the fetch uncaught, otherwise, it will
     // generate a log message that we then need to send the next time.
     try {
-      await fetch(`${this.config.baseUrl}/api/ingest/fe`, {
+      await fetch(`${this.baseUrl}/api/ingest/fe`, {
         method: 'put',
         body: SendFrontendEventsRequest.encode({
           events: copy,
@@ -80,7 +84,7 @@ export class DoctorClient {
           },
         }).finish(),
         headers: {
-          ['X-DOCTOR-PUBLIC-KEY']: this.config.publicKey || '',
+          [PUBLIC_KEY_HEADER]: this.config.publicKey || '',
         },
       })
     } catch (e) {

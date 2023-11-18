@@ -1,7 +1,7 @@
-export { DoctorClient, DoctorClientConfig } from './client'
+export { CatalystClient, CatalystClientConfig } from './client'
 export {
-  DoctorServer,
-  DoctorServerConfig,
+  CatalystServer,
+  CatalystServerConfig,
   ServerRequestContext,
 } from './server'
 export {
@@ -13,10 +13,10 @@ export {
 } from './common'
 export { installWebBase, catalystWebFetch } from './web'
 export {
-  DoctorContextType,
-  createDoctorContext,
-  updateDoctorContext,
-  getDoctorContext,
+  CatalystContextType,
+  createCatalystContext,
+  updateCatalystContext,
+  getCatalystContext,
   catalystNodeFetch,
   installNodeBase,
 } from './node'

@@ -1,5 +1,7 @@
 import {
+  DEFAULT_BASE_URL,
   PARENT_FETCH_ID_HEADER,
+  PRIVATE_KEY_HEADER,
   SESSION_ID_HEADER,
   Severity,
   objectToParams,
@@ -12,8 +14,8 @@ import {
 } from './gen/library'
 import crypto from 'crypto'
 
-export interface DoctorServerConfig {
-  baseUrl: string
+export interface CatalystServerConfig {
+  baseUrl?: string
   version: string
   systemName: string
   privateKey: string
@@ -24,26 +26,28 @@ export interface ServerFetchHeaders {
   [PARENT_FETCH_ID_HEADER]: string
 }
 
-export class DoctorServer {
-  private static instance: DoctorServer | null = null
+export class CatalystServer {
+  private static instance: CatalystServer | null = null
 
-  static init(config: DoctorServerConfig): DoctorServer {
-    if (DoctorServer.instance == null) {
-      DoctorServer.instance = new DoctorServer(config)
+  static init(config: CatalystServerConfig): CatalystServer {
+    if (CatalystServer.instance == null) {
+      CatalystServer.instance = new CatalystServer(config)
     }
-    return DoctorServer.instance
+    return CatalystServer.instance
   }
 
-  static get(): DoctorServer {
-    if (DoctorServer.instance == null) {
+  static get(): CatalystServer {
+    if (CatalystServer.instance == null) {
       throw Error('Must create instance first!')
     }
-    return DoctorServer.instance
+    return CatalystServer.instance
   }
 
+  private baseUrl: string
   private eventQueue: SendBackendEventsRequest_Event[] = []
 
-  constructor(public readonly config: DoctorServerConfig) {
+  constructor(public readonly config: CatalystServerConfig) {
+    this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL
     setInterval(() => {
       this.flushEvents()
     }, 1000)
@@ -59,7 +63,7 @@ export class DoctorServer {
     // We cannot leave the fetch uncaught, otherwise, it will
     // generate a log message that we then need to send the next time.
     try {
-      await fetch(`${this.config.baseUrl}/api/ingest/be`, {
+      await fetch(`${this.baseUrl}/api/ingest/be`, {
         method: 'put',
         body: SendBackendEventsRequest.encode({
           events: copy,
@@ -69,7 +73,7 @@ export class DoctorServer {
           },
         }).finish(),
         headers: {
-          ['X-DOCTOR-PRIVATE-KEY']: this.config.privateKey,
+          [PRIVATE_KEY_HEADER]: this.config.privateKey,
         },
       })
     } catch (e) {

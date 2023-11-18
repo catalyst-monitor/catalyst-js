@@ -1,11 +1,16 @@
 import { Path_Param } from './gen/common'
 import { LogSeverity } from './gen/library'
 
-export const SESSION_ID_HEADER = 'X-Doctor-SessionId'
-export const PARENT_FETCH_ID_HEADER = 'X-Doctor-ParentFetchId'
-export const PAGE_VIEW_ID_HEADER = 'X-Doctor-PageViewId'
+export const PUBLIC_KEY_HEADER = 'X-Catalyst-Public-Key'
+export const PRIVATE_KEY_HEADER = 'X-Catalyst-Private-Key'
 
-export const COOKIE_NAME = 'codedoctorsession'
+export const SESSION_ID_HEADER = 'X-Catalyst-SessionId'
+export const PARENT_FETCH_ID_HEADER = 'X-Catalyst-ParentFetchId'
+export const PAGE_VIEW_ID_HEADER = 'X-Catalyst-PageViewId'
+
+export const COOKIE_NAME = 'catalystmonitorsession'
+
+export const DEFAULT_BASE_URL = 'https://app.catalystmonitor.com'
 
 export type Severity = 'info' | 'warn' | 'error'
 

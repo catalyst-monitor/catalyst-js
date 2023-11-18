@@ -1,4 +1,4 @@
-import { DoctorClient, DoctorClientConfig } from './client'
+import { CatalystClient, CatalystClientConfig } from './client'
 import { COOKIE_NAME, Severity, parseConsoleArgs } from './common'
 
 export function catalystWebFetch(
@@ -9,7 +9,7 @@ export function catalystWebFetch(
     ...(init ?? {}),
     headers: {
       ...(init?.headers ?? {}),
-      ...DoctorClient.get().getFetchHeaders(),
+      ...CatalystClient.get().getFetchHeaders(),
     },
   }
   return fetch(input, newInit)
@@ -27,7 +27,7 @@ declare global {
   }
 }
 
-export function installWebBase(config: DoctorClientConfig): DoctorClient {
+export function installWebBase(config: CatalystClientConfig): CatalystClient {
   if (typeof window == 'undefined') {
     throw Error('Not running in a browser!')
   }
@@ -50,8 +50,8 @@ export function installWebBase(config: DoctorClientConfig): DoctorClient {
     document.cookie = `${COOKIE_NAME}=${existing}; Expires=0; SameSite=Strict`
   }
 
-  DoctorClient.init(config, existing)
-  const client = DoctorClient.get()
+  CatalystClient.init(config, existing)
+  const client = CatalystClient.get()
 
   window.console.__catalystOldLog = window.console.log
   window.console.__catalystOldWarn = window.console.warn
@@ -108,13 +108,13 @@ export function installWebBase(config: DoctorClientConfig): DoctorClient {
 
   window.__catalystHasBeenInstantiated = true
 
-  return DoctorClient.get()
+  return CatalystClient.get()
 }
 
 function buildNewConsoleMethod(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   old: (...d: any[]) => void,
-  client: DoctorClient,
+  client: CatalystClient,
   severity: Severity
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): (...d: any[]) => void {

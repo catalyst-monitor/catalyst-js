@@ -1,8 +1,8 @@
 import {
-  DoctorServer,
+  CatalystServer,
   ServerRequestContext,
-  createDoctorContext,
-  getDoctorContext,
+  createCatalystContext,
+  getCatalystContext,
   COOKIE_NAME,
 } from '@doctor/javascript-core'
 import { cookies } from 'next/headers'
@@ -34,7 +34,7 @@ export function wrapUseServerPage<
   P,
 >(component: (p: P) => T): (p: P) => T {
   return (p: P) => {
-    const context = getDoctorContext()
+    const context = getCatalystContext()
     if (context == null) {
       console.warn('React Server Component called without context!')
       return component(p)
@@ -43,13 +43,13 @@ export function wrapUseServerPage<
       const retVal = component(p)
       if (retVal instanceof Promise) {
         retVal.catch((e) => {
-          DoctorServer.get().recordLog('error', e, {}, context)
+          CatalystServer.get().recordLog('error', e, {}, context)
           throw e
         })
       }
       return retVal
     } catch (e) {
-      DoctorServer.get().recordLog('error', e, {}, context)
+      CatalystServer.get().recordLog('error', e, {}, context)
       throw e
     }
   }
@@ -83,16 +83,13 @@ export function DoctorWrapper({
       expires: 0,
     })
   }
-  const doctorServer = DoctorServer.init(
-    {
-      baseUrl,
-      privateKey,
-      systemName,
-      version,
-    },
-    cookie
-  )
-  return createDoctorContext(newContext, () =>
+  const doctorServer = CatalystServer.init({
+    baseUrl,
+    privateKey,
+    systemName,
+    version,
+  })
+  return createCatalystContext(newContext, () =>
     createElement(
       Fragment,
       {},

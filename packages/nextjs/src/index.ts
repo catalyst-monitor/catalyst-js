@@ -1,3 +1,3 @@
 export * from './client'
 export * from './server'
-export * from '@doctor/javascript-core'
+export * from '@catalyst-monitor/core'

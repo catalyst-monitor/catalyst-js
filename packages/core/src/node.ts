@@ -1,7 +1,7 @@
 import type { AsyncLocalStorage } from 'async_hooks'
 import {
-  DoctorServer,
-  DoctorServerConfig,
+  CatalystServer,
+  CatalystServerConfig,
   ServerRequestContext,
 } from './server'
 import { Severity, parseConsoleArgs } from './common'
@@ -10,7 +10,7 @@ export function catalystNodeFetch(
   input: RequestInfo | URL,
   init?: RequestInit | undefined
 ): Promise<Response> {
-  const context = getDoctorContext()
+  const context = getCatalystContext()
   if (context == null) {
     throw new Error('Tried to fetch without context!')
   }
@@ -18,7 +18,7 @@ export function catalystNodeFetch(
     ...(init ?? {}),
     headers: {
       ...(init?.headers ?? {}),
-      ...DoctorServer.get().getFetchHeaders(context),
+      ...CatalystServer.get().getFetchHeaders(context),
     },
   }
   return fetch(input, newInit)
@@ -36,7 +36,7 @@ declare global {
   }
 }
 
-export function installNodeBase(config: DoctorServerConfig): DoctorServer {
+export function installNodeBase(config: CatalystServerConfig): CatalystServer {
   if (globalThis.__catalystHasBeenInstantiated == true) {
     if (globalThis.console.__catalystOldWarn != null) {
       globalThis.console.__catalystOldWarn(
@@ -45,7 +45,7 @@ export function installNodeBase(config: DoctorServerConfig): DoctorServer {
     }
   }
 
-  const server = DoctorServer.init(config)
+  const server = CatalystServer.init(config)
 
   globalThis.console.__catalystOldLog = globalThis.console.log
   globalThis.console.__catalystOldWarn = globalThis.console.warn
@@ -69,24 +69,24 @@ export function installNodeBase(config: DoctorServerConfig): DoctorServer {
 
   globalThis.__catalystHasBeenInstantiated = true
 
-  return DoctorServer.get()
+  return CatalystServer.get()
 }
 
-let doctorContextStorage: AsyncLocalStorage<DoctorContextType> | null = null
+let doctorContextStorage: AsyncLocalStorage<CatalystContextType> | null = null
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const asyncHooks = require('async_hooks')
   doctorContextStorage =
-    new asyncHooks.AsyncLocalStorage() as AsyncLocalStorage<DoctorContextType>
+    new asyncHooks.AsyncLocalStorage() as AsyncLocalStorage<CatalystContextType>
 } catch (e) {
   // Do nothing. This will fail for clients.
 }
 
-export interface DoctorContextType {
+export interface CatalystContextType {
   context: ServerRequestContext
 }
 
-export function createDoctorContext<T>(
+export function createCatalystContext<T>(
   context: ServerRequestContext,
   callback: () => T
 ): T {
@@ -101,7 +101,7 @@ export function createDoctorContext<T>(
   )
 }
 
-export function updateDoctorContext(context: ServerRequestContext) {
+export function updateCatalystContext(context: ServerRequestContext) {
   if (doctorContextStorage == null) {
     return
   }
@@ -111,7 +111,7 @@ export function updateDoctorContext(context: ServerRequestContext) {
   }
 }
 
-export function getDoctorContext(): ServerRequestContext | undefined {
+export function getCatalystContext(): ServerRequestContext | undefined {
   if (doctorContextStorage == null) {
     return
   }
@@ -121,13 +121,13 @@ export function getDoctorContext(): ServerRequestContext | undefined {
 function buildNewConsoleMethod(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   old: (...d: any[]) => void,
-  server: DoctorServer,
+  server: CatalystServer,
   severity: Severity
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): (...d: any[]) => void {
   return (...data) => {
     old(...data)
-    const context = getDoctorContext()
+    const context = getCatalystContext()
     if (context == null) {
       return
     }

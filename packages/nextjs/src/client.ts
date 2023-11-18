@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect } from 'react'
 import { useParams, usePathname } from 'next/navigation'
-import { DoctorClient, installWebBase } from '@doctor/javascript-core'
+import { CatalystClient, installWebBase } from '@catalyst-monitor/core'
 
 export function wrapError(
   component: (props: {
@@ -17,7 +17,7 @@ export function wrapError(
     error: Error & { digest?: string }
     reset: () => void
   }) => {
-    DoctorClient.get().recordLog('error', error, {})
+    CatalystClient.get().recordLog('error', error, {})
     return component({ error, reset })
   }
 }
@@ -31,7 +31,7 @@ export function DoctorClientInstaller({
   loggedInEmail,
   loggedInId,
 }: {
-  baseUrl: string
+  baseUrl?: string
   systemName: string
   version: string
   publicKey: string
@@ -74,7 +74,7 @@ export function DoctorClientInstaller({
         )
       }
     }
-    DoctorClient.get().recordPageView(rawPath, params)
+    CatalystClient.get().recordPageView(rawPath, params)
   }, [pathname, params])
   return null
 }
