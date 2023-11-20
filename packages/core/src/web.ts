@@ -9,7 +9,7 @@ export function catalystWebFetch(
     ...(init ?? {}),
     headers: {
       ...(init?.headers ?? {}),
-      ...CatalystClient.get().getFetchHeaders(),
+      ...getCatalyst().getFetchHeaders(),
     },
   }
   return fetch(input, newInit)
@@ -17,7 +17,7 @@ export function catalystWebFetch(
 
 declare global {
   interface Window {
-    __catalystHasBeenInstantiated: boolean | undefined
+    __catalystWebInstance: CatalystClient | undefined
   }
 
   interface Console {
@@ -27,16 +27,29 @@ declare global {
   }
 }
 
+function getCatalyst(): CatalystClient {
+  if (window.__catalystWebInstance == null) {
+    throw Error(
+      'Catalyst has not been instantiated yet! Try running "installWebBase" first!'
+    )
+  }
+  return window.__catalystWebInstance
+}
+
+export const getCatalystWeb = getCatalyst
+
 export function installWebBase(config: CatalystClientConfig): CatalystClient {
   if (typeof window == 'undefined') {
     throw Error('Not running in a browser!')
   }
 
-  if (
-    window.__catalystHasBeenInstantiated == true &&
-    window.console.__catalystOldLog != null
-  ) {
-    window.console.__catalystOldLog('Catalyst has already been instantiated!')
+  if (window.__catalystWebInstance != null) {
+    if (window.console.__catalystOldWarn != null) {
+      window.console.__catalystOldWarn(
+        'Catalyst has already been instantiated!'
+      )
+    }
+    return window.__catalystWebInstance
   }
 
   let existing = null
@@ -50,8 +63,8 @@ export function installWebBase(config: CatalystClientConfig): CatalystClient {
     document.cookie = `${COOKIE_NAME}=${existing}; Expires=0; SameSite=Strict`
   }
 
-  CatalystClient.init(config, existing)
-  const client = CatalystClient.get()
+  const client = new CatalystClient(config, existing)
+  window.__catalystWebInstance = client
 
   window.console.__catalystOldLog = window.console.log
   window.console.__catalystOldWarn = window.console.warn
@@ -106,9 +119,8 @@ export function installWebBase(config: CatalystClientConfig): CatalystClient {
     { capture: true }
   )
 
-  window.__catalystHasBeenInstantiated = true
-
-  return CatalystClient.get()
+  window.__catalystWebInstance = client
+  return client
 }
 
 function buildNewConsoleMethod(

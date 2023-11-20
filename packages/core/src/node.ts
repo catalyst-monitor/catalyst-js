@@ -18,7 +18,7 @@ export function catalystNodeFetch(
     ...(init ?? {}),
     headers: {
       ...(init?.headers ?? {}),
-      ...CatalystServer.get().getFetchHeaders(context),
+      ...getCatalystNode().getFetchHeaders(context),
     },
   }
   return fetch(input, newInit)
@@ -27,7 +27,7 @@ export function catalystNodeFetch(
 declare global {
   // Must be var for global declaration.
   // eslint-disable-next-line no-var
-  var __catalystHasBeenInstantiated: boolean | undefined
+  var __catalystNodeInstance: CatalystServer | undefined
 
   interface Console {
     __catalystOldLog: typeof window.console.log | undefined
@@ -36,16 +36,26 @@ declare global {
   }
 }
 
+export function getCatalystNode(): CatalystServer {
+  if (globalThis.__catalystNodeInstance == null) {
+    throw Error(
+      'Catalyst has not been instantiated yet! Try running "installNodeBase" first!'
+    )
+  }
+  return globalThis.__catalystNodeInstance
+}
+
 export function installNodeBase(config: CatalystServerConfig): CatalystServer {
-  if (globalThis.__catalystHasBeenInstantiated == true) {
+  if (globalThis.__catalystNodeInstance != null) {
     if (globalThis.console.__catalystOldWarn != null) {
       globalThis.console.__catalystOldWarn(
         'Catalyst has already been instantiated!'
       )
     }
+    return globalThis.__catalystNodeInstance
   }
 
-  const server = CatalystServer.init(config)
+  const server = new CatalystServer(config)
 
   globalThis.console.__catalystOldLog = globalThis.console.log
   globalThis.console.__catalystOldWarn = globalThis.console.warn
@@ -67,9 +77,9 @@ export function installNodeBase(config: CatalystServerConfig): CatalystServer {
     'error'
   )
 
-  globalThis.__catalystHasBeenInstantiated = true
+  globalThis.__catalystNodeInstance = server
 
-  return CatalystServer.get()
+  return server
 }
 
 let doctorContextStorage: AsyncLocalStorage<CatalystContextType> | null = null

@@ -27,22 +27,6 @@ export interface ServerFetchHeaders {
 }
 
 export class CatalystServer {
-  private static instance: CatalystServer | null = null
-
-  static init(config: CatalystServerConfig): CatalystServer {
-    if (CatalystServer.instance == null) {
-      CatalystServer.instance = new CatalystServer(config)
-    }
-    return CatalystServer.instance
-  }
-
-  static get(): CatalystServer {
-    if (CatalystServer.instance == null) {
-      throw Error('Must create instance first!')
-    }
-    return CatalystServer.instance
-  }
-
   private baseUrl: string
   private eventQueue: SendBackendEventsRequest_Event[] = []
 

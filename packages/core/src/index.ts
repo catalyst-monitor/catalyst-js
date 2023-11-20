@@ -11,7 +11,7 @@ export {
   PARENT_FETCH_ID_HEADER,
   PAGE_VIEW_ID_HEADER,
 } from './common'
-export { installWebBase, catalystWebFetch } from './web'
+export { getCatalystWeb, installWebBase, catalystWebFetch } from './web'
 export {
   CatalystContextType,
   createCatalystContext,
@@ -19,4 +19,5 @@ export {
   getCatalystContext,
   catalystNodeFetch,
   installNodeBase,
+  getCatalystNode,
 } from './node'

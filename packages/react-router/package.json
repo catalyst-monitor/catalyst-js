@@ -1,0 +1,29 @@
+{
+  "name": "@catalyst-monitor/react-router",
+  "version": "0.0.1",
+  "description": "Sets up Catalyst monitoring for React Router.",
+  "main": "dist/index.js",
+  "license": "GPL-3.0-or-later",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "prebuild": "eslint src/**/*",
+    "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@catalyst-monitor/core": "^0.0.1",
+    "react": "^18.2.0",
+    "react-router": "^6.19.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.0.3"
+  }
+}

@@ -26,22 +26,6 @@ export interface ClientFetchHeaders {
 }
 
 export class CatalystClient {
-  private static instance: CatalystClient | null = null
-
-  static init(config: CatalystClientConfig, sessionId: string): CatalystClient {
-    if (CatalystClient.instance == null) {
-      CatalystClient.instance = new CatalystClient(config, sessionId)
-    }
-    return CatalystClient.instance
-  }
-
-  static get(): CatalystClient {
-    if (CatalystClient.instance == null) {
-      throw Error('Must create instance first!')
-    }
-    return CatalystClient.instance
-  }
-
   private eventQueue: SendFrontendEventsRequest_Event[] = []
   private loggedInEmail: string | null
   private loggedInId: string | null
