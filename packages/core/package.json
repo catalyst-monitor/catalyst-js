@@ -9,6 +9,7 @@
     "/dist"
   ],
   "scripts": {
+    "prebuild": "eslint src/**/*",
     "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
   },
   "devDependencies": {
