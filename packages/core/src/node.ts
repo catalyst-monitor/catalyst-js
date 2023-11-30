@@ -45,9 +45,20 @@ export function getCatalystNode(): CatalystServer {
   return globalThis.__catalystNodeInstance
 }
 
-export function installNodeBase(config: CatalystServerConfig): CatalystServer {
+export interface InstallNodeOptions {
+  // We must disable this, as Next.JS relies on running install multiple times.
+  disableDuplicateInstallWarning: boolean
+}
+
+export function installNodeBase(
+  config: CatalystServerConfig,
+  options?: InstallNodeOptions
+): CatalystServer {
   if (globalThis.__catalystNodeInstance != null) {
-    if (globalThis.console.__catalystOldWarn != null) {
+    if (
+      options?.disableDuplicateInstallWarning == true &&
+      globalThis.console.__catalystOldWarn != null
+    ) {
       globalThis.console.__catalystOldWarn(
         'Catalyst has already been instantiated!'
       )

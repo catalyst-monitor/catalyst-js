@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "jsx": "react"
   },
   "references": [
     {

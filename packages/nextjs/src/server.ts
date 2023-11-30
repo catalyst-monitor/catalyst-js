@@ -1,15 +1,107 @@
 import {
-  CatalystServer,
-  ServerRequestContext,
   createCatalystContext,
-  getCatalystContext,
   COOKIE_NAME,
+  getCatalystNode,
 } from '@doctor/javascript-core'
 import { cookies } from 'next/headers'
-import { Fragment, createElement } from 'react'
-import { DoctorClientInstaller } from './client'
 import { NextRequest } from 'next/dist/server/web/spec-extension/request'
 import { NextResponse } from 'next/dist/server/web/spec-extension/response'
+import { AsyncLocalStorage } from 'async_hooks'
+import {
+  requestAsyncStorage,
+  RequestStore,
+} from 'next/dist/client/components/request-async-storage.external'
+import crypto from 'crypto'
+import { differenceInSeconds } from 'date-fns'
+
+export function wrapServerPage<
+  T extends { params?: { [key: string]: string } },
+>(
+  pageName: string,
+  component: (props: T) => React.ReactNode
+): (props: T) => React.ReactNode {
+  return (props) => {
+    const store = getStore()
+    if (store == null) {
+      return component(props)
+    }
+
+    const context = getOrInitContext(store)
+
+    const startTime = new Date()
+    const sendFetch = isFirstRecordFetch(store)
+      ? (success: boolean) => {
+          getCatalystNode().recordFetch(
+            'get',
+            pageName,
+            props.params ?? {},
+            success ? 200 : 500,
+            {
+              seconds: differenceInSeconds(new Date(), startTime),
+              nanos: 0,
+            },
+            context
+          )
+        }
+      : () => {}
+
+    return createCatalystContext(context, () => {
+      let retVal
+      try {
+        retVal = component(props)
+      } catch (e) {
+        sendFetch(false)
+        getCatalystNode().recordLog('error', e, {}, context)
+        throw e
+      }
+      if (retVal instanceof Promise) {
+        retVal.then(
+          (v) => {
+            sendFetch(true)
+            return v
+          },
+          (e) => {
+            sendFetch(false)
+            getCatalystNode().recordLog('error', e, {}, context)
+            throw e
+          }
+        )
+      } else {
+        sendFetch(true)
+      }
+      return retVal
+    })
+  }
+}
+
+export function wrapServerComponent<T>(
+  component: (props: T) => React.ReactNode
+): (props: T) => React.ReactNode {
+  return (props) => {
+    const store = getStore()
+    if (store == null) {
+      return component(props)
+    }
+    const context = getOrInitContext(store)
+
+    return createCatalystContext(context, () => {
+      let retVal
+      try {
+        retVal = component(props)
+      } catch (e) {
+        getCatalystNode().recordLog('error', e, {}, context)
+        throw e
+      }
+      if (retVal instanceof Promise) {
+        retVal.catch((e) => {
+          getCatalystNode().recordLog('error', e, {}, context)
+          throw e
+        })
+      }
+      return retVal
+    })
+  }
+}
 
 export function wrapRouteHandler() {}
 
@@ -19,88 +111,44 @@ export function wrapMiddleware(
   return (request: NextRequest) => {
     const resp = mw(request)
     const cookie = request.cookies.get(COOKIE_NAME)
-    if (cookie == null) {
-      resp.cookies.set(COOKIE_NAME, crypto.randomUUID(), {
-        sameSite: 'strict',
-        expires: 0,
-      })
-    }
     return resp
   }
 }
 
-export function wrapUseServerPage<
-  T extends React.ReactNode | Promise<React.ReactNode>,
-  P,
->(component: (p: P) => T): (p: P) => T {
-  return (p: P) => {
-    const context = getCatalystContext()
-    if (context == null) {
-      console.warn('React Server Component called without context!')
-      return component(p)
-    }
-    try {
-      const retVal = component(p)
-      if (retVal instanceof Promise) {
-        retVal.catch((e) => {
-          CatalystServer.get().recordLog('error', e, {}, context)
-          throw e
-        })
-      }
-      return retVal
-    } catch (e) {
-      CatalystServer.get().recordLog('error', e, {}, context)
-      throw e
-    }
-  }
+interface NextJSCatalystContext {
+  sessionId: string
+  fetchId: string
 }
 
-export function DoctorWrapper({
-  children,
-  publicKey,
-  privateKey,
-  systemName,
-  version,
-  baseUrl,
-}: {
-  baseUrl: string
-  children: React.ReactNode
-  privateKey: string
-  systemName: string
-  version: string
-  publicKey: string
-}) {
-  const newContext: ServerRequestContext = {
-    fetchId: crypto.randomUUID(),
-    sessionId: crypto.randomUUID(),
+type ExtendedRequestAsyncStorageType = RequestStore & {
+  __catalystContext?: NextJSCatalystContext
+  __catalystFetchRecorded?: boolean
+}
+
+export function getStore() {
+  return (
+    requestAsyncStorage as
+      | AsyncLocalStorage<ExtendedRequestAsyncStorageType>
+      | undefined
+  )?.getStore()
+}
+
+export function getOrInitContext(
+  store: ExtendedRequestAsyncStorageType
+): NextJSCatalystContext {
+  if (store.__catalystContext == null) {
+    const sessionId = cookies().get(COOKIE_NAME)?.value ?? crypto.randomUUID()
+    store.__catalystContext = {
+      sessionId: sessionId,
+      fetchId: crypto.randomUUID(),
+    }
   }
-  const cookieStore = cookies()
-  let cookie = cookieStore.get(COOKIE_NAME)?.value
-  if (cookie == null) {
-    cookie = crypto.randomUUID()
-    cookieStore.set(COOKIE_NAME, cookie, {
-      sameSite: 'strict',
-      expires: 0,
-    })
-  }
-  const doctorServer = CatalystServer.init({
-    baseUrl,
-    privateKey,
-    systemName,
-    version,
-  })
-  return createCatalystContext(newContext, () =>
-    createElement(
-      Fragment,
-      {},
-      children,
-      createElement(DoctorClientInstaller, {
-        baseUrl: doctorServer.config.baseUrl,
-        systemName: `${doctorServer.config.systemName}-fe`,
-        version: doctorServer.config.version,
-        publicKey,
-        sessionId: newContext.sessionId,
-      })
-    )
-  )
+
+  return store.__catalystContext
+}
+
+function isFirstRecordFetch(store: ExtendedRequestAsyncStorageType): boolean {
+  const isFirst = store.__catalystFetchRecorded != true
+  store.__catalystFetchRecorded = true
+  return isFirst
 }
