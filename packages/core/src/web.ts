@@ -1,5 +1,5 @@
 import { CatalystClient, CatalystClientConfig } from './client'
-import { COOKIE_NAME, Severity, parseConsoleArgs } from './common'
+import { COOKIE_NAME, installConsoleWrappers } from './common'
 
 export function catalystWebFetch(
   input: RequestInfo | URL,
@@ -66,25 +66,9 @@ export function installWebBase(config: CatalystClientConfig): CatalystClient {
   const client = new CatalystClient(config, existing)
   window.__catalystWebInstance = client
 
-  window.console.__catalystOldLog = window.console.log
-  window.console.__catalystOldWarn = window.console.warn
-  window.console.__catalystOldError = window.console.error
-
-  window.console.log = buildNewConsoleMethod(
-    window.console.__catalystOldLog,
-    client,
-    'info'
-  )
-  window.console.warn = buildNewConsoleMethod(
-    window.console.__catalystOldWarn,
-    client,
-    'warn'
-  )
-  window.console.error = buildNewConsoleMethod(
-    window.console.__catalystOldError,
-    client,
-    'error'
-  )
+  installConsoleWrappers(window, (severity, message, params) => {
+    client.recordLog(severity, message, params)
+  })
 
   window.addEventListener('error', (e) => {
     client.recordLog('error', e.error, {})
@@ -121,20 +105,4 @@ export function installWebBase(config: CatalystClientConfig): CatalystClient {
 
   window.__catalystWebInstance = client
   return client
-}
-
-function buildNewConsoleMethod(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  old: (...d: any[]) => void,
-  client: CatalystClient,
-  severity: Severity
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): (...d: any[]) => void {
-  return (...data) => {
-    old(...data)
-    const parsed = parseConsoleArgs(data)
-    if (parsed != null) {
-      client.recordLog(severity, parsed[0], parsed[1])
-    }
-  }
 }

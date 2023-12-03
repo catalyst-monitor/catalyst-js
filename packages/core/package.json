@@ -8,11 +8,14 @@
   "files": [
     "/dist"
   ],
+  "sideEffects": false,
   "scripts": {
     "prebuild": "eslint src/**/*",
     "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
   },
   "devDependencies": {
+    "@bufbuild/protobuf": "^1.5.0",
+    "@bufbuild/protoc-gen-es": "^1.5.0",
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
     "eslint": "^8.50.0",
@@ -26,7 +29,5 @@
     "semi": false,
     "singleQuote": true
   },
-  "dependencies": {
-    "ts-proto": "^1.159.2"
-  }
+  "dependencies": {}
 }

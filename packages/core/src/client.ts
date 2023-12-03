@@ -1,3 +1,4 @@
+import { Timestamp } from '@bufbuild/protobuf'
 import {
   SESSION_ID_HEADER,
   objectToParams,
@@ -7,10 +8,14 @@ import {
   DEFAULT_BASE_URL,
   PUBLIC_KEY_HEADER,
 } from './common'
+import { Path } from './gen/common_pb'
 import {
+  Click,
+  Log,
+  PageView,
   SendFrontendEventsRequest,
   SendFrontendEventsRequest_Event,
-} from './gen/library'
+} from './gen/library_pb'
 
 export interface CatalystClientConfig {
   baseUrl?: string
@@ -56,7 +61,7 @@ export class CatalystClient {
     try {
       await fetch(`${this.baseUrl}/api/ingest/fe`, {
         method: 'put',
-        body: SendFrontendEventsRequest.encode({
+        body: new SendFrontendEventsRequest({
           events: copy,
           info: {
             name: this.config.systemName,
@@ -66,7 +71,7 @@ export class CatalystClient {
             userAgent: this.config.userAgent ?? '',
             version: this.config.version,
           },
-        }).finish(),
+        }).toBinary(),
         headers: {
           [PUBLIC_KEY_HEADER]: this.config.publicKey || '',
         },
@@ -117,28 +122,38 @@ export class CatalystClient {
 
   recordPageView(pattern: string, args: { [key: string]: string | string[] }) {
     this.currentPageViewId = crypto.randomUUID()
-    this.eventQueue.push({
-      pageViewId: this.currentPageViewId,
-      pageView: {
-        time: new Date(),
-        path: {
-          pattern,
-          params: objectToParams(args),
+    this.eventQueue.push(
+      new SendFrontendEventsRequest_Event({
+        pageViewId: this.currentPageViewId,
+        event: {
+          case: 'pageView',
+          value: new PageView({
+            time: Timestamp.now(),
+            path: new Path({
+              pattern,
+              params: objectToParams(args),
+            }),
+          }),
         },
-      },
-    })
+      })
+    )
   }
 
   recordClick(selector: string, text: string) {
-    this.eventQueue.push({
-      pageViewId: this.currentPageViewId ?? '',
-      click: {
-        id: crypto.randomUUID(),
-        buttonText: text,
-        selector: selector,
-        time: new Date(),
-      },
-    })
+    this.eventQueue.push(
+      new SendFrontendEventsRequest_Event({
+        pageViewId: this.currentPageViewId ?? '',
+        event: {
+          case: 'click',
+          value: new Click({
+            id: crypto.randomUUID(),
+            buttonText: text,
+            selector: selector,
+            time: Timestamp.now(),
+          }),
+        },
+      })
+    )
   }
 
   recordLog(
@@ -158,29 +173,34 @@ export class CatalystClient {
     } else {
       messageStr = '' + message
     }
-    this.eventQueue.push({
-      pageViewId: this.currentPageViewId ?? '',
-      log: {
-        id: crypto.randomUUID(),
-        message: messageStr,
-        stackTrace: stack ?? '',
-        logSeverity: toProtoSeverity(severity),
-        time: new Date(),
-        logArgs: Object.entries(args).map((entry) => {
-          let argKey: 'stringVal' | 'intVal' | 'floatVal'
-          if (typeof entry[1] == 'string') {
-            argKey = 'stringVal'
-          } else if (Number.isInteger(entry[1]) == true) {
-            argKey = 'intVal'
-          } else {
-            argKey = 'floatVal'
-          }
-          return {
-            paramName: entry[0],
-            [argKey]: entry[1],
-          }
-        }),
-      },
-    })
+    this.eventQueue.push(
+      new SendFrontendEventsRequest_Event({
+        pageViewId: this.currentPageViewId ?? '',
+        event: {
+          case: 'log',
+          value: new Log({
+            id: crypto.randomUUID(),
+            message: messageStr,
+            stackTrace: stack ?? '',
+            logSeverity: toProtoSeverity(severity),
+            time: Timestamp.now(),
+            logArgs: Object.entries(args).map((entry) => {
+              let argKey: 'stringVal' | 'intVal' | 'floatVal'
+              if (typeof entry[1] == 'string') {
+                argKey = 'stringVal'
+              } else if (Number.isInteger(entry[1]) == true) {
+                argKey = 'intVal'
+              } else {
+                argKey = 'floatVal'
+              }
+              return {
+                paramName: entry[0],
+                [argKey]: entry[1],
+              }
+            }),
+          }),
+        },
+      })
+    )
   }
 }

@@ -1,10 +1,7 @@
-import type { AsyncLocalStorage } from 'async_hooks'
-import {
-  CatalystServer,
-  CatalystServerConfig,
-  ServerRequestContext,
-} from './server'
-import { Severity, parseConsoleArgs } from './common'
+import { CatalystServer, CatalystServerConfig } from './server'
+import { installConsoleWrappers } from './common'
+import { getCatalystContext } from './async_hooks'
+import crypto from 'crypto'
 
 export function catalystNodeFetch(
   input: RequestInfo | URL,
@@ -45,20 +42,9 @@ export function getCatalystNode(): CatalystServer {
   return globalThis.__catalystNodeInstance
 }
 
-export interface InstallNodeOptions {
-  // We must disable this, as Next.JS relies on running install multiple times.
-  disableDuplicateInstallWarning: boolean
-}
-
-export function installNodeBase(
-  config: CatalystServerConfig,
-  options?: InstallNodeOptions
-): CatalystServer {
+export function installNodeBase(config: CatalystServerConfig): CatalystServer {
   if (globalThis.__catalystNodeInstance != null) {
-    if (
-      options?.disableDuplicateInstallWarning == true &&
-      globalThis.console.__catalystOldWarn != null
-    ) {
+    if (globalThis.console.__catalystOldWarn != null) {
       globalThis.console.__catalystOldWarn(
         'Catalyst has already been instantiated!'
       )
@@ -66,95 +52,15 @@ export function installNodeBase(
     return globalThis.__catalystNodeInstance
   }
 
-  const server = new CatalystServer(config)
+  const server = new CatalystServer(config, () => crypto.randomUUID())
 
-  globalThis.console.__catalystOldLog = globalThis.console.log
-  globalThis.console.__catalystOldWarn = globalThis.console.warn
-  globalThis.console.__catalystOldError = globalThis.console.error
-
-  globalThis.console.log = buildNewConsoleMethod(
-    globalThis.console.__catalystOldLog,
-    server,
-    'info'
-  )
-  globalThis.console.warn = buildNewConsoleMethod(
-    globalThis.console.__catalystOldWarn,
-    server,
-    'warn'
-  )
-  globalThis.console.error = buildNewConsoleMethod(
-    globalThis.console.__catalystOldError,
-    server,
-    'error'
-  )
+  installConsoleWrappers(globalThis, (severity, message, params) => {
+    const context = getCatalystContext()
+    if (context != null) {
+      server.recordLog(severity, message, params, context)
+    }
+  })
 
   globalThis.__catalystNodeInstance = server
-
   return server
-}
-
-let doctorContextStorage: AsyncLocalStorage<CatalystContextType> | null = null
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const asyncHooks = require('async_hooks')
-  doctorContextStorage =
-    new asyncHooks.AsyncLocalStorage() as AsyncLocalStorage<CatalystContextType>
-} catch (e) {
-  // Do nothing. This will fail for clients.
-}
-
-export interface CatalystContextType {
-  context: ServerRequestContext
-}
-
-export function createCatalystContext<T>(
-  context: ServerRequestContext,
-  callback: () => T
-): T {
-  if (doctorContextStorage == null) {
-    return callback()
-  }
-  return doctorContextStorage.run(
-    {
-      context,
-    },
-    callback
-  )
-}
-
-export function updateCatalystContext(context: ServerRequestContext) {
-  if (doctorContextStorage == null) {
-    return
-  }
-  const store = doctorContextStorage.getStore()
-  if (store != null) {
-    store.context = context
-  }
-}
-
-export function getCatalystContext(): ServerRequestContext | undefined {
-  if (doctorContextStorage == null) {
-    return
-  }
-  return doctorContextStorage.getStore()?.context
-}
-
-function buildNewConsoleMethod(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  old: (...d: any[]) => void,
-  server: CatalystServer,
-  severity: Severity
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): (...d: any[]) => void {
-  return (...data) => {
-    old(...data)
-    const context = getCatalystContext()
-    if (context == null) {
-      return
-    }
-    const parsed = parseConsoleArgs(data)
-    if (parsed != null) {
-      server.recordLog(severity, parsed[0], parsed[1], context)
-    }
-  }
 }

@@ -2,10 +2,14 @@ import parser from '@babel/parser'
 import * as t from '@babel/types'
 import generate from '@babel/generator'
 import type * as webpack from 'webpack'
-import { replaceReactComponent } from './loader.js'
+import { CatalystInitOptions, buildInit, wrapDefaultExport } from './loader.js'
+
+interface ComponentLoaderOptions {
+  catalystInit: CatalystInitOptions
+}
 
 export default function loader(
-  this: webpack.LoaderContext<void>,
+  this: webpack.LoaderContext<ComponentLoaderOptions>,
   source: string
 ): string {
   if (source.startsWith('/* __next_internal_client_entry_do_not_use__')) {
@@ -19,13 +23,19 @@ export default function loader(
     return source
   }
 
+  const options = this.getOptions()
   const ast = parser.parse(source, { sourceType: 'module' })
   const body = ast.program.body
 
   const wrapIdentifier = t.identifier('wrapServerComponent')
 
-  const replaced = replaceReactComponent(body, (newExpr) =>
-    t.exportDefaultDeclaration(t.callExpression(wrapIdentifier, [newExpr]))
+  const replaced = wrapDefaultExport(body, (newExpr) =>
+    t.exportDefaultDeclaration(
+      t.callExpression(wrapIdentifier, [
+        buildInit(options.catalystInit),
+        newExpr,
+      ])
+    )
   )
   if (replaced) {
     body.unshift(

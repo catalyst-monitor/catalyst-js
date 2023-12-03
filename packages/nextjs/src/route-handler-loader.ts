@@ -2,30 +2,29 @@ import parser from '@babel/parser'
 import * as t from '@babel/types'
 import generate from '@babel/generator'
 import type * as webpack from 'webpack'
-import { CatalystInitOptions, buildInit, wrapDefaultExport } from './loader.js'
+import { CatalystInitOptions, buildInit, wrapNamedExports } from './loader.js'
 
-interface PageLoaderOptions {
+interface RouteHandlerLoaderOptions {
   originalPath: string
   catalystInit: CatalystInitOptions
 }
 
+const METHODS_TO_WRAP = [
+  'GET',
+  'POST',
+  'PUT',
+  'PATCH',
+  'DELETE',
+  'HEAD',
+  'OPTIONS',
+]
+
 export default function loader(
-  this: webpack.LoaderContext<PageLoaderOptions>,
+  this: webpack.LoaderContext<RouteHandlerLoaderOptions>,
   source: string
 ): string {
-  if (source.startsWith('/* __next_internal_client_entry_do_not_use__')) {
-    return source
-  }
-  if (
-    source.startsWith(
-      'import { createProxy } from "next/dist/build/webpack/loaders/next-flight-loader/module-proxy"'
-    )
-  ) {
-    return source
-  }
-
+  const wrapIdentifier = t.identifier('wrapRouteHandler')
   const options = this.getOptions()
-  const wrapIdentifier = t.identifier('wrapServerPage')
 
   let path = this.resourcePath
   if (this.resourcePath.startsWith(options.originalPath)) {
@@ -35,16 +34,16 @@ export default function loader(
   const ast = parser.parse(source, { sourceType: 'module' })
   const body = ast.program.body
 
-  const replaced = wrapDefaultExport(body, (newExpr) =>
-    t.exportDefaultDeclaration(
-      t.callExpression(wrapIdentifier, [
-        buildInit(options.catalystInit),
-        t.stringLiteral(path),
-        newExpr,
-      ])
-    )
+  const shouldImport = wrapNamedExports(body, METHODS_TO_WRAP, (id, exported) =>
+    t.callExpression(wrapIdentifier, [
+      buildInit(options.catalystInit),
+      t.stringLiteral(exported),
+      t.stringLiteral(path),
+      id,
+    ])
   )
-  if (replaced) {
+
+  if (shouldImport) {
     body.unshift(
       t.importDeclaration(
         [t.importSpecifier(wrapIdentifier, wrapIdentifier)],
@@ -54,5 +53,6 @@ export default function loader(
   }
 
   // @ts-expect-error No idea why Webpack module import is different.
-  return generate.default(ast, {}, source).code
+  const generated = generate.default(ast, {}, source).code
+  return generated
 }

@@ -1,3 +1,4 @@
+import { Duration, Timestamp } from '@bufbuild/protobuf'
 import {
   DEFAULT_BASE_URL,
   PARENT_FETCH_ID_HEADER,
@@ -8,11 +9,12 @@ import {
   toProtoSeverity,
 } from './common'
 import {
+  Fetch,
+  Log,
   SendBackendEventsRequest,
   SendBackendEventsRequest_Event,
   TraceInfo,
-} from './gen/library'
-import crypto from 'crypto'
+} from './gen/library_pb'
 
 export interface CatalystServerConfig {
   baseUrl?: string
@@ -30,7 +32,10 @@ export class CatalystServer {
   private baseUrl: string
   private eventQueue: SendBackendEventsRequest_Event[] = []
 
-  constructor(public readonly config: CatalystServerConfig) {
+  constructor(
+    public readonly config: CatalystServerConfig,
+    private readonly uuidGenerator: () => string
+  ) {
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL
     setInterval(() => {
       this.flushEvents()
@@ -49,16 +54,17 @@ export class CatalystServer {
     try {
       await fetch(`${this.baseUrl}/api/ingest/be`, {
         method: 'put',
-        body: SendBackendEventsRequest.encode({
+        body: new SendBackendEventsRequest({
           events: copy,
           info: {
             name: this.config.systemName,
             version: this.config.version,
           },
-        }).finish(),
+        }).toBinary(),
         headers: {
           [PRIVATE_KEY_HEADER]: this.config.privateKey,
         },
+        cache: 'no-store',
       })
     } catch (e) {
       console.error(
@@ -85,19 +91,31 @@ export class CatalystServer {
     duration: { seconds: number; nanos: number },
     context: ServerRequestContext
   ) {
-    this.eventQueue.push({
-      traceInfo: contextToTrace(context),
-      fetch: {
-        method: method.toLowerCase(),
-        path: {
-          pattern,
-          params: objectToParams(args),
+    this.eventQueue.push(
+      new SendBackendEventsRequest_Event({
+        traceInfo: contextToTrace(context),
+        event: {
+          case: 'fetch',
+          value: new Fetch({
+            method: method.toLowerCase(),
+            path: {
+              pattern,
+              params: objectToParams(args),
+            },
+            requestDuration: new Duration({
+              // The input seconds supports a smaller number than the PB library.
+              // This is done because in most cases, we don't need the size.
+              // date-fns difference functions return a number, for instance.
+              // Javascript's max int is basically a 53 bit integer.
+              seconds: BigInt(duration.seconds),
+              nanos: duration.nanos,
+            }),
+            statusCode,
+            endTime: Timestamp.now(),
+          }),
         },
-        requestDuration: duration,
-        statusCode,
-        endTime: new Date(),
-      },
-    })
+      })
+    )
   }
 
   recordLog(
@@ -118,30 +136,35 @@ export class CatalystServer {
     } else {
       messageStr = '' + message
     }
-    this.eventQueue.push({
-      traceInfo: contextToTrace(context),
-      log: {
-        id: crypto.randomUUID(),
-        message: messageStr,
-        stackTrace: stack ?? '',
-        logSeverity: toProtoSeverity(severity),
-        time: new Date(),
-        logArgs: Object.entries(args).map((entry) => {
-          let argKey: 'stringVal' | 'intVal' | 'floatVal'
-          if (typeof entry[1] == 'string') {
-            argKey = 'stringVal'
-          } else if (Number.isInteger(entry[1]) == true) {
-            argKey = 'intVal'
-          } else {
-            argKey = 'floatVal'
-          }
-          return {
-            paramName: entry[0],
-            [argKey]: entry[1],
-          }
-        }),
-      },
-    })
+    this.eventQueue.push(
+      new SendBackendEventsRequest_Event({
+        traceInfo: contextToTrace(context),
+        event: {
+          case: 'log',
+          value: new Log({
+            id: this.uuidGenerator(),
+            message: messageStr,
+            stackTrace: stack ?? '',
+            logSeverity: toProtoSeverity(severity),
+            time: Timestamp.now(),
+            logArgs: Object.entries(args).map((entry) => {
+              let argKey: 'stringVal' | 'intVal' | 'floatVal'
+              if (typeof entry[1] == 'string') {
+                argKey = 'stringVal'
+              } else if (Number.isInteger(entry[1]) == true) {
+                argKey = 'intVal'
+              } else {
+                argKey = 'floatVal'
+              }
+              return {
+                paramName: entry[0],
+                [argKey]: entry[1],
+              }
+            }),
+          }),
+        },
+      })
+    )
   }
 }
 
@@ -155,12 +178,12 @@ export interface ServerRequestContext {
 }
 
 function contextToTrace(context: ServerRequestContext): TraceInfo {
-  return {
+  return new TraceInfo({
     fetchId: context.fetchId,
     sessionId: context.sessionId,
     loggedInEmail: context.loggedInEmail ?? '',
     loggedInId: context.loggedInId ?? '',
     pageViewId: context.pageViewId ?? '',
     parentFetchId: context.parentFetchId ?? '',
-  }
+  })
 }
