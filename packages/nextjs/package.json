@@ -1,16 +1,16 @@
 {
   "name": "@catalyst-monitor/nextjs",
   "version": "0.0.1",
-  "main": "dist/index.js",
   "license": "GPL-3.0-or-later",
-  "types": "dist/index.d.ts",
   "files": [
     "/dist"
   ],
-  "type": "module",
   "sideEffects": false,
+  "main": "dist/cjs/nextjs-config.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
   "scripts": {
-    "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p ."
+    "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p . && tsc -p tsconfig-cjs.json"
   },
   "devDependencies": {
     "@babel/generator": "^7.23.4",
