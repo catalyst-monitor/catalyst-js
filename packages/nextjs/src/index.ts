@@ -1,5 +1,3 @@
 export * from './server'
 export * from '@catalyst-monitor/core'
 export { default as CatalystInstaller } from './CatalystInstaller'
-export * from './nextjs-config'
-export { CatalystInitOptions } from './loader'

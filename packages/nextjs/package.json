@@ -6,11 +6,20 @@
     "/dist"
   ],
   "sideEffects": false,
-  "main": "dist/cjs/nextjs-config.js",
-  "module": "dist/esm/index.js",
-  "types": "dist/esm/index.d.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./config": "./dist/nextjs-config.js",
+    "./component-loader": "./dist/component-loader.js",
+    "./page-loader": "./dist/page-loader.js",
+    "./middleware-loader": "./dist/middleware-loader.js",
+    "./route-handler-loader": "./dist/route-handler-loader.js"
+  },
   "scripts": {
-    "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p . && tsc -p tsconfig-cjs.json"
+    "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p ."
   },
   "devDependencies": {
     "@babel/generator": "^7.23.4",

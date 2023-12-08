@@ -20,15 +20,15 @@ export function withCatalystConfig(
       oldWpConfig.module.rules.unshift({
         test: /(?:page|default)\.(tsx|jsx)$/,
         include: [
-          path.resolve(__dirname, 'app'),
-          path.resolve(__dirname, 'src', 'app'),
+          path.resolve(options.dir, 'app'),
+          path.resolve(options.dir, 'src', 'app'),
         ],
         use: [
           {
-            loader: '@catalyst-monitor/nextjs/dist/page-loader',
+            loader: '@catalyst-monitor/nextjs/page-loader',
             options: {
               catalystInit,
-              originalPath: __dirname,
+              originalPath: options.dir,
             },
           },
         ],
@@ -36,12 +36,12 @@ export function withCatalystConfig(
       oldWpConfig.module.rules.unshift({
         test: /\/(?!page|loading|not-found|error|global-error|template).+\.(tsx|jsx)$/,
         include: [
-          path.resolve(__dirname, 'app'),
-          path.resolve(__dirname, 'src', 'app'),
+          path.resolve(options.dir, 'app'),
+          path.resolve(options.dir, 'src', 'app'),
         ],
         use: [
           {
-            loader: '@catalyst-monitor/nextjs/dist/component-loader',
+            loader: '@catalyst-monitor/nextjs/component-loader',
             options: {
               catalystInit,
             },
@@ -51,35 +51,35 @@ export function withCatalystConfig(
       oldWpConfig.module.rules.unshift({
         test: /\/route.(ts|js)$/,
         include: [
-          path.resolve(__dirname, 'app'),
-          path.resolve(__dirname, 'src', 'app'),
+          path.resolve(options.dir, 'app'),
+          path.resolve(options.dir, 'src', 'app'),
         ],
         use: [
           {
-            loader: '@catalyst-monitor/nextjs/dist/route-handler-loader',
+            loader: '@catalyst-monitor/nextjs/route-handler-loader',
             options: {
               catalystInit,
-              originalPath: __dirname,
+              originalPath: options.dir,
             },
           },
         ],
       })
       oldWpConfig.module.rules.unshift({
         test: (p: string) => {
-          if (p.startsWith(__dirname)) {
+          if (p.startsWith(options.dir)) {
             return (
-              p == path.resolve(__dirname, 'middleware.ts') ||
-              p == path.resolve(__dirname, 'middleware.js')
+              p == path.resolve(options.dir, 'middleware.ts') ||
+              p == path.resolve(options.dir, 'middleware.js')
             )
           }
           return p == 'middlware.ts' || p == 'middleware.js'
         },
         use: [
           {
-            loader: '@catalyst-monitor/nextjs/dist/middleware-loader',
+            loader: '@catalyst-monitor/nextjs/middleware-loader',
             options: {
               catalystInit,
-              originalPath: __dirname,
+              originalPath: options.dir,
             },
           },
         ],
