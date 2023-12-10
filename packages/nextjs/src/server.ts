@@ -8,7 +8,7 @@ import {
   CatalystServer,
   installConsoleWrappers,
   getCatalystContext,
-} from '@doctor/javascript-core'
+} from '@catalyst-monitor/core'
 import { AsyncLocalStorage } from 'async_hooks'
 import {
   requestAsyncStorage,
