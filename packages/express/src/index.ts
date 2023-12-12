@@ -6,7 +6,7 @@ import {
   SESSION_ID_HEADER,
   PAGE_VIEW_ID_HEADER,
   PARENT_FETCH_ID_HEADER,
-} from '@catalyst-monitor/core'
+} from '@catalyst-monitor/core/node'
 import crypto from 'crypto'
 
 export const catalystErrorHandler: ErrorRequestHandler = (
@@ -45,7 +45,9 @@ export const catalystHandler: RequestHandler = (req, res, next) => {
           req.params ?? {},
           res.statusCode,
           {
-            seconds: (new Date().getTime() - start.getTime()) / 1000,
+            seconds: Math.floor(
+              (new Date().getTime() - start.getTime()) / 1000
+            ),
             nanos: 0,
           },
           context

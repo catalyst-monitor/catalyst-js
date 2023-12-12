@@ -1,13 +1,31 @@
 {
   "name": "@catalyst-monitor/core",
-  "version": "0.0.4",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
+  "version": "0.0.7",
   "license": "GPL-3.0-or-later",
-  "types": "dist/esm/index.d.ts",
+  "types": "dist/esm/types.d.ts",
   "files": [
     "/dist"
   ],
+  "exports": {
+    "./web": {
+      "require": "./dist/cjs/index.web.js",
+      "import": "./dist/esm/index.web.js"
+    },
+    "./node": {
+      "require": "./dist/cjs/index.node.js",
+      "import": "./dist/esm/index.node.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "web": [
+        "dist/esm/index.web.d.ts"
+      ],
+      "node": [
+        "dist/esm/index.node.d.ts"
+      ]
+    }
+  },
   "sideEffects": false,
   "scripts": {
     "prebuild": "eslint src/**/*",

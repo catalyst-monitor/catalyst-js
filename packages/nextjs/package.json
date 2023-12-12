@@ -1,6 +1,6 @@
 {
   "name": "@catalyst-monitor/nextjs",
-  "version": "0.0.5",
+  "version": "0.0.8",
   "license": "GPL-3.0-or-later",
   "files": [
     "/dist"
@@ -11,7 +11,8 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "exports": {
-    ".": "./dist/index.js",
+    "./client": "./dist/index.client.js",
+    "./server": "./dist/index.server.js",
     "./config": "./dist/nextjs-config.js",
     "./component-loader": "./dist/component-loader.js",
     "./page-loader": "./dist/page-loader.js",
@@ -47,7 +48,7 @@
     "singleQuote": true
   },
   "dependencies": {
-    "@catalyst-monitor/core": "^0.0.4",
+    "@catalyst-monitor/core": "^0.0.7",
     "date-fns": "^2.30.0"
   }
 }

@@ -4,7 +4,7 @@ import {
   COOKIE_NAME,
   getCatalystWeb,
   installWebBase,
-} from '@catalyst-monitor/core'
+} from '@catalyst-monitor/core/web'
 import { useParams, usePathname } from 'next/navigation'
 import { useEffect, useLayoutEffect } from 'react'
 

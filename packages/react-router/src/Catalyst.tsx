@@ -1,4 +1,4 @@
-import { getCatalystWeb } from '@catalyst-monitor/core'
+import { getCatalystWeb } from '@catalyst-monitor/core/web'
 import React from 'react'
 import { useLayoutEffect } from 'react'
 import {

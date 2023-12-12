@@ -47,7 +47,7 @@ export default function loader(
     body.unshift(
       t.importDeclaration(
         [t.importSpecifier(wrapIdentifier, wrapIdentifier)],
-        t.stringLiteral('@catalyst-monitor/nextjs')
+        t.stringLiteral('@catalyst-monitor/nextjs/server')
       )
     )
   }

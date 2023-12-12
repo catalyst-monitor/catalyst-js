@@ -4,7 +4,7 @@
         "strict": true,
         "strictNullChecks": true,
         "esModuleInterop": true,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "allowJs": true,
         "module": "es2020",
         "declaration": true
