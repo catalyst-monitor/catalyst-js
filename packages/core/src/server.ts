@@ -67,7 +67,12 @@ export class CatalystServer {
         cache: 'no-store',
       })
     } catch (e) {
-      console.error(
+      const logFn =
+        '__catalystOldError' in globalThis.console &&
+        globalThis.console.__catalystOldError != null
+          ? globalThis.console.__catalystOldError
+          : globalThis.console.error
+      logFn(
         'Could not report events!',
         e,
         'Dropping the following events',

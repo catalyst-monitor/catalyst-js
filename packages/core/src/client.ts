@@ -77,21 +77,17 @@ export class CatalystClient {
         },
       })
     } catch (e) {
-      if (window.console.__catalystOldError != null) {
-        window.console.__catalystOldError(
-          'Could not report events!',
-          e,
-          'Dropping the following events',
-          copy
-        )
-      } else {
-        console.error(
-          'Could not report events!',
-          e,
-          'Dropping the following events',
-          copy
-        )
-      }
+      const logFn =
+        '__catalystOldError' in window.console &&
+        window.console.__catalystOldError != null
+          ? window.console.__catalystOldError
+          : window.console.error
+      logFn(
+        'Could not report events!',
+        e,
+        'Dropping the following events',
+        copy
+      )
     }
   }
 
