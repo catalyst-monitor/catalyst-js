@@ -12,6 +12,7 @@ import { Path } from './gen/common_pb'
 import {
   Click,
   Log,
+  LogArg,
   PageView,
   SendFrontendEventsRequest,
   SendFrontendEventsRequest_Event,
@@ -77,21 +78,17 @@ export class CatalystClient {
         },
       })
     } catch (e) {
-      if (window.console.__catalystOldError != null) {
-        window.console.__catalystOldError(
-          'Could not report events!',
-          e,
-          'Dropping the following events',
-          copy
-        )
-      } else {
-        console.error(
-          'Could not report events!',
-          e,
-          'Dropping the following events',
-          copy
-        )
-      }
+      const logFn =
+        '__catalystOldError' in window.console &&
+        window.console.__catalystOldError != null
+          ? window.console.__catalystOldError
+          : window.console.error
+      logFn(
+        'Could not report events!',
+        e,
+        'Dropping the following events',
+        copy
+      )
     }
   }
 
@@ -185,18 +182,21 @@ export class CatalystClient {
             logSeverity: toProtoSeverity(severity),
             time: Timestamp.now(),
             logArgs: Object.entries(args).map((entry) => {
-              let argKey: 'stringVal' | 'intVal' | 'floatVal'
+              let logValue:
+                | { case: 'strVal'; value: string }
+                | { case: 'intVal'; value: number }
+                | { case: 'doubleVal'; value: number }
               if (typeof entry[1] == 'string') {
-                argKey = 'stringVal'
+                logValue = { case: 'strVal', value: entry[1] }
               } else if (Number.isInteger(entry[1]) == true) {
-                argKey = 'intVal'
+                logValue = { case: 'intVal', value: entry[1] }
               } else {
-                argKey = 'floatVal'
+                logValue = { case: 'doubleVal', value: entry[1] }
               }
-              return {
+              return new LogArg({
+                logValue,
                 paramName: entry[0],
-                [argKey]: entry[1],
-              }
+              })
             }),
           }),
         },

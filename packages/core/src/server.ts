@@ -11,6 +11,7 @@ import {
 import {
   Fetch,
   Log,
+  LogArg,
   SendBackendEventsRequest,
   SendBackendEventsRequest_Event,
   TraceInfo,
@@ -31,15 +32,20 @@ export interface ServerFetchHeaders {
 export class CatalystServer {
   private baseUrl: string
   private eventQueue: SendBackendEventsRequest_Event[] = []
+  private timer: NodeJS.Timeout
 
   constructor(
     public readonly config: CatalystServerConfig,
     private readonly uuidGenerator: () => string
   ) {
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL
-    setInterval(() => {
+    this.timer = setInterval(() => {
       this.flushEvents()
     }, 1000)
+  }
+
+  destroy() {
+    this.timer.unref()
   }
 
   async flushEvents() {
@@ -67,7 +73,12 @@ export class CatalystServer {
         cache: 'no-store',
       })
     } catch (e) {
-      console.error(
+      const logFn =
+        '__catalystOldError' in globalThis.console &&
+        globalThis.console.__catalystOldError != null
+          ? globalThis.console.__catalystOldError
+          : globalThis.console.error
+      logFn(
         'Could not report events!',
         e,
         'Dropping the following events',
@@ -148,18 +159,21 @@ export class CatalystServer {
             logSeverity: toProtoSeverity(severity),
             time: Timestamp.now(),
             logArgs: Object.entries(args).map((entry) => {
-              let argKey: 'stringVal' | 'intVal' | 'floatVal'
+              let logValue:
+                | { case: 'strVal'; value: string }
+                | { case: 'intVal'; value: number }
+                | { case: 'doubleVal'; value: number }
               if (typeof entry[1] == 'string') {
-                argKey = 'stringVal'
+                logValue = { case: 'strVal', value: entry[1] }
               } else if (Number.isInteger(entry[1]) == true) {
-                argKey = 'intVal'
+                logValue = { case: 'intVal', value: entry[1] }
               } else {
-                argKey = 'floatVal'
+                logValue = { case: 'doubleVal', value: entry[1] }
               }
-              return {
+              return new LogArg({
+                logValue,
                 paramName: entry[0],
-                [argKey]: entry[1],
-              }
+              })
             }),
           }),
         },
