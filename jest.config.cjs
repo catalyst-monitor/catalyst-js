@@ -1,5 +1,6 @@
 /** @type {import('jest').Config} */
 const config = {
+  workerThreads: true,
   projects: [
     {
       transform: {
@@ -16,7 +17,8 @@ const config = {
         '<rootDir>/packages/core/src/gen',
       ],
       displayName: 'core',
-      testMatch: ['<rootDir>/packages/core/src/(*.)+test\\.ts']
+      testMatch: ['<rootDir>/packages/core/src/(*.)+test\\.ts'],
+      
     }
   ]
 };
