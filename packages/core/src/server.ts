@@ -32,15 +32,20 @@ export interface ServerFetchHeaders {
 export class CatalystServer {
   private baseUrl: string
   private eventQueue: SendBackendEventsRequest_Event[] = []
+  private timer: NodeJS.Timeout
 
   constructor(
     public readonly config: CatalystServerConfig,
     private readonly uuidGenerator: () => string
   ) {
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL
-    setInterval(() => {
+    this.timer = setInterval(() => {
       this.flushEvents()
     }, 1000)
+  }
+
+  destroy() {
+    this.timer.unref()
   }
 
   async flushEvents() {

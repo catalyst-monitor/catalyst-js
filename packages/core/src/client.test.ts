@@ -9,7 +9,11 @@ import {
   SendFrontendEventsRequest,
   SendFrontendEventsRequest_Event,
 } from './gen/library_pb'
-import { PUBLIC_KEY_HEADER } from './common'
+import {
+  PAGE_VIEW_ID_HEADER,
+  PUBLIC_KEY_HEADER,
+  SESSION_ID_HEADER,
+} from './common'
 import { Timestamp } from '@bufbuild/protobuf'
 
 jest.useFakeTimers()
@@ -463,6 +467,40 @@ test('recordLog populates events while on page', async () => {
       pageViewId: crypto.randomUUID(),
     }),
   ])
+})
+
+test('getFetchHeaders sends session ID', () => {
+  const config = {
+    baseUrl: 'https://www.example.com',
+    version: '123',
+    systemName: 'test',
+    userAgent: 'ua',
+    publicKey: 'key',
+  }
+  const sessionId = 'asdf'
+  const client = new CatalystClient(config, sessionId)
+
+  expect(client.getFetchHeaders()).toStrictEqual({
+    [SESSION_ID_HEADER]: 'asdf',
+  })
+})
+
+test('getFetchHeaders sends current page view ID', () => {
+  const config = {
+    baseUrl: 'https://www.example.com',
+    version: '123',
+    systemName: 'test',
+    userAgent: 'ua',
+    publicKey: 'key',
+  }
+  const sessionId = 'asdf'
+  const client = new CatalystClient(config, sessionId)
+  client.recordPageView('/test', {})
+
+  expect(client.getFetchHeaders()).toStrictEqual({
+    [SESSION_ID_HEADER]: 'asdf',
+    [PAGE_VIEW_ID_HEADER]: crypto.randomUUID(),
+  })
 })
 
 async function extractRequest(mockFn: jest.Mock) {

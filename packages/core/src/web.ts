@@ -91,13 +91,12 @@ export function installWebBase(config: CatalystClientConfig): CatalystClient {
       if (el.classList.length > 0) {
         querySelector += [...el.classList].map((c) => `.${c}`).join('')
       }
-      let cleanedText = el.innerText
+      let cleanedText = el.textContent ?? ''
       const newlineIdx = cleanedText.indexOf('\n')
       if (newlineIdx != -1 || cleanedText.length > 200) {
         cleanedText =
           cleanedText.slice(0, Math.min(cleanedText.indexOf('\n'), 200)) + '...'
       }
-
       client.recordClick(querySelector, cleanedText)
     },
     { capture: true }

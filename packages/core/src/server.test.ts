@@ -2,6 +2,7 @@ import { Timestamp } from '@bufbuild/protobuf'
 import { PRIVATE_KEY_HEADER } from './common'
 import {
   BackEndInfo,
+  Fetch,
   LogSeverity,
   SendBackendEventsRequest,
   SendBackendEventsRequest_Event,
@@ -111,7 +112,8 @@ test('recordFetch correctly populates context', async () => {
   expect(mockFetch.mock.calls[0][1].headers[PRIVATE_KEY_HEADER]).toBe('key')
 })
 
-test('recordFetch correctly populates context', async () => {
+test('recordFetch correctly sends event', async () => {
+  jest.setSystemTime(new Date(2020, 2, 2))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -125,7 +127,10 @@ test('recordFetch correctly populates context', async () => {
   client.recordFetch(
     'get',
     '/test',
-    {},
+    {
+      test1: '1',
+      test2: '2',
+    },
     200,
     { seconds: 5, nanos: 10 },
     {
@@ -133,21 +138,29 @@ test('recordFetch correctly populates context', async () => {
       sessionId: '2',
     }
   )
+  const recordTime = Timestamp.now()
   jest.advanceTimersByTime(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
   const req = await extractRequest(mockFetch)
 
-  expect(req.events[0].event).toStrictEqual(
-    new SendBackendEventsRequest_Event({
-      event: {},
-      traceInfo: {
-        fetchId: '1',
-        sessionId: '2',
+  expect(req.events[0].event).toStrictEqual({
+    case: 'fetch',
+    value: new Fetch({
+      endTime: recordTime,
+      method: 'get',
+      path: {
+        pattern: '/test',
+        params: [
+          { argValue: '1', paramName: 'test1' },
+          { argValue: '2', paramName: 'test2' },
+        ],
       },
-    })
-  )
+      requestDuration: { seconds: BigInt(5), nanos: 10 },
+      statusCode: 200,
+    }),
+  })
 })
 
 test('recordLog correctly populates context', async () => {
