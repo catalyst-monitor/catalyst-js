@@ -3,6 +3,7 @@ import { PRIVATE_KEY_HEADER } from './common'
 import {
   BackEndInfo,
   Fetch,
+  Log,
   LogSeverity,
   SendBackendEventsRequest,
   SendBackendEventsRequest_Event,
@@ -10,10 +11,14 @@ import {
 } from './gen/library_pb'
 import { CatalystServer } from './server'
 
-jest.useFakeTimers()
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const mockFetch = jest.fn((_1, _2) => Promise.resolve(new Response()))
+global.fetch = mockFetch
 
-afterEach(() => {
-  jest.restoreAllMocks()
+beforeEach(() => {
+  jest.useFakeTimers()
+  mockFetch.mockClear()
+  mockFetch.mockReset()
 })
 
 test('flushEvents calls and batches events', async () => {
@@ -24,8 +29,6 @@ test('flushEvents calls and batches events', async () => {
     privateKey: 'key',
   }
   const client = new CatalystServer(config, () => '1')
-  const mockFetch = jest.fn(() => Promise.resolve(new Response()))
-  global.fetch = mockFetch
   jest.advanceTimersByTime(1000)
 
   expect(mockFetch).not.toHaveBeenCalled()
@@ -41,7 +44,8 @@ test('flushEvents calls and batches events', async () => {
   expect(req.events).toHaveLength(2)
 })
 
-test('flushEvents failing does not generate events', () => {
+test('flushEvents retries', async () => {
+  jest.setSystemTime(new Date(2020, 2, 2))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -49,16 +53,65 @@ test('flushEvents failing does not generate events', () => {
     privateKey: 'key',
   }
   const client = new CatalystServer(config, () => '1')
-  const mockFetch = jest.fn(() => Promise.resolve(Response.error()))
-  global.fetch = mockFetch
+  mockFetch.mockImplementationOnce(() => Promise.reject(new Error('hi')))
   client.recordLog('warn', 'a', {}, { fetchId: '1', sessionId: '1' })
-  jest.advanceTimersByTime(1000)
+  const recordTime = Timestamp.now()
+  await jest.advanceTimersByTimeAsync(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
-  jest.advanceTimersByTime(3000)
+  mockFetch.mockClear()
+  await jest.advanceTimersByTimeAsync(3000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
+  const req = await extractRequest(mockFetch)
+
+  expect(req.events[0].event).toStrictEqual({
+    case: 'log',
+    value: new Log({
+      time: recordTime,
+      message: 'a',
+      logSeverity: LogSeverity.WARNING_LOG_SEVERITY,
+      id: '1',
+    }),
+  })
+})
+
+test('flushEvents retries with max event count', async () => {
+  const config = {
+    baseUrl: 'https://www.example.com',
+    version: '123',
+    systemName: 'test',
+    privateKey: 'key',
+  }
+  const client = new CatalystServer(config, () => '1')
+  for (let i = 0; i < 1002; i++) {
+    client.recordLog('warn', 'b', {}, { fetchId: '1', sessionId: '1' })
+  }
+  const recordTime = Timestamp.now()
+  mockFetch.mockImplementationOnce(() => Promise.reject(new Error('hi')))
+  await jest.advanceTimersByTimeAsync(1000)
+
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+
+  mockFetch.mockClear()
+  await jest.advanceTimersByTimeAsync(3000)
+
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+  const req = await extractRequest(mockFetch)
+
+  expect(req.events).toHaveLength(1000)
+  for (let i = 0; i < 1000; i++) {
+    expect(req.events[0].event).toStrictEqual({
+      case: 'log',
+      value: new Log({
+        time: recordTime,
+        message: 'b',
+        logSeverity: LogSeverity.WARNING_LOG_SEVERITY,
+        id: '1',
+      }),
+    })
+  }
 })
 
 test('recordFetch correctly populates context', async () => {
@@ -69,9 +122,6 @@ test('recordFetch correctly populates context', async () => {
     privateKey: 'key',
   }
   const client = new CatalystServer(config, () => '1-1-1')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((_1, _2) => Promise.resolve(new Response()))
-  global.fetch = mockFetch
   client.recordFetch(
     'get',
     '/test',
@@ -121,9 +171,6 @@ test('recordFetch correctly sends event', async () => {
     privateKey: 'key',
   }
   const client = new CatalystServer(config, () => '1-1-1')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((_1, _2) => Promise.resolve(new Response()))
-  global.fetch = mockFetch
   client.recordFetch(
     'get',
     '/test',
@@ -171,9 +218,6 @@ test('recordLog correctly populates context', async () => {
     privateKey: 'key',
   }
   const client = new CatalystServer(config, () => '1-1-1')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((_1, _2) => Promise.resolve(new Response()))
-  global.fetch = mockFetch
   client.recordLog(
     'warn',
     'a',
@@ -222,9 +266,6 @@ test('recordLog populates records string message with params', async () => {
   }
 
   const client = new CatalystServer(config, () => '1-1-1')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
-  global.fetch = mockFetch
   const recordTime = Timestamp.now()
   client.recordLog(
     'warn',
@@ -287,9 +328,6 @@ test('recordLog populates records error message', async () => {
     privateKey: 'key',
   }
   const client = new CatalystServer(config, () => '1-1-1')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
-  global.fetch = mockFetch
   const recordTime = Timestamp.now()
   const testErr = new Error('hello')
   client.recordLog('error', testErr, {}, { fetchId: '1', sessionId: '2' })

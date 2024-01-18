@@ -78,12 +78,18 @@ export class CatalystServer {
         globalThis.console.__catalystOldError != null
           ? globalThis.console.__catalystOldError
           : globalThis.console.error
-      logFn(
-        'Could not report events!',
-        e,
-        'Dropping the following events',
-        copy
-      )
+      if (copy.length > 1000) {
+        this.eventQueue.push(...copy.slice(copy.length - 1000))
+        logFn(
+          'Could not report events!',
+          e,
+          'Event queue too full, dropping oldest events!',
+          copy.slice(0, copy.length - 1000)
+        )
+      } else {
+        this.eventQueue.push(...copy)
+        logFn('Could not report events! Will retry:', e)
+      }
     }
   }
 
