@@ -59,9 +59,11 @@ export function wrapServerPage<
           },
           context
         )
-        return v
+        return getCatalystNextJS()
+          .flushEvents()
+          .then(() => v)
       },
-      (e) => {
+      async (e) => {
         if (isFirstRecordFetch(store)) {
           getCatalystNextJS().recordFetch(
             'get',
@@ -76,6 +78,7 @@ export function wrapServerPage<
           )
         }
         getCatalystNextJS().recordLog('error', e, {}, context)
+        await getCatalystNextJS().flushEvents()
       }
     )
   }
@@ -102,8 +105,9 @@ export function wrapServerComponent<T>(
       context,
       () => component(props),
       (v) => v,
-      (e) => {
+      async (e) => {
         getCatalystNextJS().recordLog('error', e, {}, context)
+        await getCatalystNextJS().flushEvents()
       }
     )
   }
@@ -138,7 +142,7 @@ export function wrapRouteHandler(
     return wrapResults(
       context,
       () => original(req),
-      (val) => {
+      async (val) => {
         let statusCode = 200
         if (val instanceof NextResponse) {
           statusCode = val.status
@@ -154,9 +158,10 @@ export function wrapRouteHandler(
           },
           context
         )
+        await getCatalystNextJS().flushEvents()
         return val
       },
-      (e) => {
+      async (e) => {
         getCatalystNextJS().recordFetch(
           method,
           path,
@@ -169,6 +174,7 @@ export function wrapRouteHandler(
           context
         )
         getCatalystNextJS().recordLog('error', e, {}, context)
+        await getCatalystNextJS().flushEvents()
       }
     )
   }
