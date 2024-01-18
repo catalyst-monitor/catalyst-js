@@ -196,7 +196,7 @@ export function wrapMiddleware(
     return wrapResults(
       context,
       () => mw(request),
-      (r) => {
+      async (r) => {
         getCatalystNextJS().recordFetch(
           'get',
           'Next.JS Middleware',
@@ -208,7 +208,7 @@ export function wrapMiddleware(
           },
           context
         )
-        getCatalystNextJS().flushEvents()
+        await getCatalystNextJS().flushEvents()
 
         if (r == null) {
           const newHeaders = new Headers(request.headers)
@@ -253,7 +253,7 @@ export function wrapMiddleware(
         }
         return r
       },
-      () => {
+      async () => {
         getCatalystNextJS().recordFetch(
           'get',
           'Next.JS Middleware',
@@ -265,7 +265,7 @@ export function wrapMiddleware(
           },
           context
         )
-        getCatalystNextJS().flushEvents()
+        await getCatalystNextJS().flushEvents()
       }
     )
   }
@@ -316,32 +316,27 @@ function getCatalystNextJS(): CatalystServer {
   return globalThis.__catalystNextJSInstance
 }
 
-function wrapResults<R>(
+async function wrapResults<R>(
   context: ServerRequestContext,
   toWrap: () => R | Promise<R>,
-  onSuccess: (value: R) => R,
-  onError: (e: unknown) => void
-): R | Promise<R> {
+  onSuccess: (value: R) => R | Promise<R>,
+  onError: (e: unknown) => void | Promise<void>
+): Promise<R> {
   let value
   try {
-    value = createCatalystContext(context, () => toWrap())
+    value = await promisify(createCatalystContext(context, () => toWrap()))
   } catch (e) {
-    onError(e)
+    await promisify(onError(e))
     throw e
   }
-  if (value instanceof Promise) {
-    return value.then(
-      (v) => {
-        return onSuccess(v)
-      },
-      (e) => {
-        onError(e)
-        throw e
-      }
-    )
-  } else {
-    return onSuccess(value)
+  return onSuccess(value)
+}
+
+function promisify<R>(toPromisify: R | Promise<R>): Promise<R> {
+  if (toPromisify instanceof Promise) {
+    return toPromisify
   }
+  return Promise.resolve(toPromisify)
 }
 
 interface NextJSCatalystContext {
