@@ -14,6 +14,7 @@ import {
   requestAsyncStorage,
   RequestStore,
 } from 'next/dist/client/components/request-async-storage.external'
+import { staticGenerationAsyncStorage } from 'next/dist/client/components/static-generation-async-storage.external'
 import { differenceInSeconds } from 'date-fns'
 import { NextRequest } from 'next/dist/server/web/spec-extension/request'
 import { NextResponse } from 'next/dist/server/web/spec-extension/response'
@@ -32,6 +33,9 @@ export function wrapServerPage<
   return (props) => {
     const store = getStore()
     if (store == null) {
+      return component(props)
+    }
+    if (isStaticGeneration()) {
       return component(props)
     }
 
@@ -85,6 +89,10 @@ export function wrapServerComponent<T>(
   installNextJS()
 
   return (props) => {
+    if (isStaticGeneration()) {
+      return component(props)
+    }
+
     const store = getStore()
     if (store == null) {
       return component(props)
@@ -345,6 +353,16 @@ interface NextJSCatalystContext {
 type ExtendedRequestAsyncStorageType = RequestStore & {
   __catalystContext?: NextJSCatalystContext
   __catalystFetchRecorded?: boolean
+}
+
+export function isStaticGeneration(): boolean {
+  const staticStore =
+    staticGenerationAsyncStorage.getStore()?.isStaticGeneration
+  if (staticStore == null) {
+    // Error here.
+    return true
+  }
+  return staticStore
 }
 
 export function getStore() {
