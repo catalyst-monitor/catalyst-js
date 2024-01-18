@@ -17,7 +17,7 @@ export default function CatalystClient({
 }: {
   systemName: string
   version: string
-  sessionId: string
+  sessionId?: string
   publicKey: string
   baseUrl?: string
 }): React.ReactNode {
@@ -25,7 +25,9 @@ export default function CatalystClient({
   const params = useParams()
 
   useLayoutEffect(() => {
-    document.cookie = `${COOKIE_NAME}=${sessionId}; Expires=0; SameSite=Strict`
+    if (sessionId != null) {
+      document.cookie = `${COOKIE_NAME}=${sessionId}; Expires=0; SameSite=Strict`
+    }
     installWebBase({
       systemName,
       version,

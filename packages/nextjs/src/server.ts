@@ -373,6 +373,12 @@ export function getStore() {
   )?.getStore()
 }
 
+export function maybeGetContext(
+  store: ExtendedRequestAsyncStorageType
+): NextJSCatalystContext | undefined {
+  return store.__catalystContext
+}
+
 export function getOrInitContext(
   store: ExtendedRequestAsyncStorageType
 ): NextJSCatalystContext {

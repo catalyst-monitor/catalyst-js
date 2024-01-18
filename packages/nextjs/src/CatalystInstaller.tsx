@@ -1,6 +1,6 @@
 import React from 'react'
 import CatalystClientInstaller from './CatalystClientInstaller'
-import { getCatalystOptions, getOrInitContext, getStore } from './server'
+import { getCatalystOptions, getStore, maybeGetContext } from './server'
 
 export default function Catalyst() {
   const store = getStore()
@@ -13,7 +13,7 @@ export default function Catalyst() {
       systemName={`${initOptions?.systemName}-fe`}
       version={initOptions.version}
       publicKey={initOptions.publicKey}
-      sessionId={getOrInitContext(store).sessionId}
+      sessionId={maybeGetContext(store)?.sessionId}
       baseUrl={initOptions.baseUrl}
     />
   )
