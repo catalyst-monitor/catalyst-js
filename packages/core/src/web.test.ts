@@ -174,14 +174,25 @@ describe('web', () => {
     window.document.body.innerHTML =
       '<div>Hello <button id="test1" class="test2 test3">Click me</button></div>'
     const el = window.document.body.querySelector('#test1') as HTMLElement
-    console.debug('CLICK')
     el.click()
 
-    console.debug('CHECK')
     expect(recordClickSpy).toHaveBeenCalled()
     expect(recordClickSpy.mock.calls[0]).toStrictEqual([
       'BUTTON#test1.test2.test3',
       'Click me',
+    ])
+  })
+
+  test('installWebBase clicks truncates', () => {
+    let buttonText = `${'a'.repeat(300)}\n`.repeat(3)
+    window.document.body.innerHTML = `<div>Hello <button id="test1" class="test2 test3">${buttonText}</button></div>`
+    const el = window.document.body.querySelector('#test1') as HTMLElement
+    el.click()
+
+    expect(recordClickSpy).toHaveBeenCalled()
+    expect(recordClickSpy.mock.calls[0]).toStrictEqual([
+      'BUTTON#test1.test2.test3',
+      `${'a'.repeat(200)}...`,
     ])
   })
 

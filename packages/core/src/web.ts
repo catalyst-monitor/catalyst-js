@@ -92,10 +92,18 @@ export function installWebBase(config: CatalystClientConfig): CatalystClient {
         querySelector += [...el.classList].map((c) => `.${c}`).join('')
       }
       let cleanedText = el.textContent ?? ''
+      let isTruncated = false
       const newlineIdx = cleanedText.indexOf('\n')
-      if (newlineIdx != -1 || cleanedText.length > 200) {
-        cleanedText =
-          cleanedText.slice(0, Math.min(cleanedText.indexOf('\n'), 200)) + '...'
+      if (newlineIdx != -1) {
+        cleanedText = cleanedText.slice(0, newlineIdx)
+        isTruncated = true
+      }
+      if (cleanedText.length > 200) {
+        cleanedText = cleanedText.slice(0, 200)
+        isTruncated = true
+      }
+      if (isTruncated) {
+        cleanedText = cleanedText + '...'
       }
       client.recordClick(querySelector, cleanedText)
     },
