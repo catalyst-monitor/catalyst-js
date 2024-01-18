@@ -1,6 +1,6 @@
 {
   "name": "@catalyst-monitor/core",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "license": "GPL-3.0-or-later",
   "types": "dist/esm/types.d.ts",
   "files": [
