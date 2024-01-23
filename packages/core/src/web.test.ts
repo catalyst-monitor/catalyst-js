@@ -184,7 +184,7 @@ describe('web', () => {
   })
 
   test('installWebBase clicks truncates', () => {
-    let buttonText = `${'a'.repeat(300)}\n`.repeat(3)
+    const buttonText = `${'a'.repeat(300)}\n`.repeat(3)
     window.document.body.innerHTML = `<div>Hello <button id="test1" class="test2 test3">${buttonText}</button></div>`
     const el = window.document.body.querySelector('#test1') as HTMLElement
     el.click()

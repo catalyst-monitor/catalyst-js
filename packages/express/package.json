@@ -1,6 +1,6 @@
 {
   "name": "@catalyst-monitor/express",
-  "version": "0.0.7",
+  "version": "0.0.13",
   "description": "Sets up Catalyst monitoring for Express.",
   "main": "dist/index.js",
   "license": "GPL-3.0-or-later",
@@ -13,7 +13,7 @@
     "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@catalyst-monitor/core": "^0.0.7",
+    "@catalyst-monitor/core": "^0.0.13",
     "express": "^4.18.2"
   },
   "devDependencies": {
