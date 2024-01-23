@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "prebuild": "eslint src/**/*",
-    "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json"
+    "build": "yarn prebuild && rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json"
   },
   "dependencies": {
     "@catalyst-monitor/core": "^0.0.13",
