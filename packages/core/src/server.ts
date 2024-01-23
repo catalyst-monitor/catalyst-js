@@ -22,6 +22,7 @@ export interface CatalystServerConfig {
   version: string
   systemName: string
   privateKey: string
+  disabled?: boolean
 }
 
 export interface ServerFetchHeaders {
@@ -49,6 +50,9 @@ export class CatalystServer {
   }
 
   async flushEvents() {
+    if (this.config.disabled == true) {
+      return
+    }
     if (this.eventQueue.length == 0) {
       return
     }

@@ -24,6 +24,7 @@ export interface CatalystClientConfig {
   systemName: string
   userAgent?: string
   publicKey?: string
+  disabled?: boolean
 }
 
 export interface ClientFetchHeaders {
@@ -51,6 +52,9 @@ export class CatalystClient {
   }
 
   async flushEvents() {
+    if (this.config.disabled == true) {
+      return
+    }
     if (this.eventQueue.length == 0) {
       return
     }

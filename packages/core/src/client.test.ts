@@ -22,6 +22,30 @@ afterEach(() => {
   jest.restoreAllMocks()
 })
 
+test('flushEvents sends nothing if disabled', async () => {
+  const config = {
+    baseUrl: 'https://www.example.com',
+    version: '123',
+    systemName: 'test',
+    userAgent: 'ua',
+    publicKey: 'key',
+    disabled: true,
+  }
+  const sessionId = 'asdf'
+  const client = new CatalystClient(config, sessionId)
+  const mockFetch = jest.fn(() => Promise.resolve(new Response()))
+  window.fetch = mockFetch
+
+  client.recordClick('a', 'a')
+  jest.advanceTimersByTime(1000)
+
+  expect(mockFetch).toHaveBeenCalledTimes(0)
+
+  client.flushEvents()
+
+  expect(mockFetch).toHaveLength(0)
+})
+
 test('flushEvents calls and batches events', async () => {
   const config = {
     baseUrl: 'https://www.example.com',

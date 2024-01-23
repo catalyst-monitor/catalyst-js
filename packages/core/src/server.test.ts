@@ -21,6 +21,26 @@ beforeEach(() => {
   mockFetch.mockReset()
 })
 
+test('flushEvents sends nothing if disabled', async () => {
+  const config = {
+    baseUrl: 'https://www.example.com',
+    version: '123',
+    systemName: 'test',
+    privateKey: 'key',
+    disabled: true,
+  }
+  const client = new CatalystServer(config, () => '1')
+  jest.advanceTimersByTime(1000)
+  client.recordLog('warn', 'a', {}, { fetchId: '1', sessionId: '1' })
+  jest.advanceTimersByTime(1000)
+
+  expect(mockFetch).toHaveBeenCalledTimes(0)
+
+  client.flushEvents()
+
+  expect(mockFetch).toHaveBeenCalledTimes(0)
+})
+
 test('flushEvents calls and batches events', async () => {
   const config = {
     baseUrl: 'https://www.example.com',
