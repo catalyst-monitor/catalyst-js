@@ -1,19 +1,8 @@
-import type { AsyncLocalStorage } from 'async_hooks'
+import async_hooks from 'async_hooks'
 import { ServerRequestContext } from './server'
 
-// Ideally, this should be tree shaken-out.
-// Unfortunately, there doesn't seem to be a way to do so right now.
-let doctorContextStorage: AsyncLocalStorage<CatalystContextType> | null = null
-try {
-  if (typeof window == 'undefined') {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const asyncHooks = require('async_hooks')
-    doctorContextStorage =
-      new asyncHooks.AsyncLocalStorage() as AsyncLocalStorage<CatalystContextType>
-  }
-} catch (e) {
-  // Do nothing. This will fail for clients.
-}
+const doctorContextStorage =
+  new async_hooks.AsyncLocalStorage<CatalystContextType>()
 
 export interface CatalystContextType {
   context: ServerRequestContext
