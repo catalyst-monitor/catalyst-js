@@ -1,5 +1,5 @@
 import { Timestamp } from '@bufbuild/protobuf'
-import { PRIVATE_KEY_HEADER } from './common'
+import { PRIVATE_KEY_HEADER } from './common.js'
 import {
   BackEndInfo,
   Fetch,
@@ -8,8 +8,8 @@ import {
   SendBackendEventsRequest,
   SendBackendEventsRequest_Event,
   TraceInfo,
-} from './gen/library_pb'
-import { CatalystServer } from './server'
+} from './gen/library_pb.js'
+import { CatalystServer } from './server.js'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const mockFetch = jest.fn((_1, _2) => Promise.resolve(new Response()))

@@ -1,6 +1,6 @@
-import { CatalystServer, CatalystServerConfig } from './server'
-import { installConsoleWrappers } from './common'
-import { getCatalystContext } from './async_hooks'
+import { CatalystServer, CatalystServerConfig } from './server.js'
+import { installConsoleWrappers } from './common.js'
+import { getCatalystContext } from './async_hooks.js'
 import crypto from 'crypto'
 
 export function catalystNodeFetch(

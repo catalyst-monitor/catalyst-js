@@ -2,7 +2,7 @@ import {
   createCatalystContext,
   getCatalystContext,
   updateCatalystContext,
-} from './async_hooks'
+} from './async_hooks.js'
 
 test('getCatalystContext gets context', () => {
   const val = {

@@ -1,5 +1,5 @@
 import async_hooks from 'async_hooks'
-import { ServerRequestContext } from './server'
+import { ServerRequestContext } from './server.js'
 
 const doctorContextStorage =
   new async_hooks.AsyncLocalStorage<CatalystContextType>()

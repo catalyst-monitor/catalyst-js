@@ -2,18 +2,20 @@
   "name": "@catalyst-monitor/core",
   "version": "0.0.13",
   "license": "GPL-3.0-or-later",
-  "types": "dist/esm/types.d.ts",
   "files": [
     "/dist"
   ],
+  "type": "module",
   "exports": {
     "./web": {
       "require": "./dist/cjs/index.web.js",
-      "import": "./dist/esm/index.web.js"
+      "import": "./dist/esm/index.web.js",
+      "types": "./dist/esm/index.web.d.ts"
     },
     "./node": {
       "require": "./dist/cjs/index.node.js",
-      "import": "./dist/esm/index.node.js"
+      "import": "./dist/esm/index.node.js",
+      "types": "./dist/esm/index.node.d.ts"
     }
   },
   "typesVersions": {

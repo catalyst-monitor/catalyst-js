@@ -2,8 +2,12 @@
  * @jest-environment ../../../jest.fixjsdom.ts
  */
 
-import { COOKIE_NAME, PAGE_VIEW_ID_HEADER, SESSION_ID_HEADER } from './common'
-import { catalystWebFetch, getCatalystWeb, installWebBase } from './web'
+import {
+  COOKIE_NAME,
+  PAGE_VIEW_ID_HEADER,
+  SESSION_ID_HEADER,
+} from './common.js'
+import { catalystWebFetch, getCatalystWeb, installWebBase } from './web.js'
 
 const config = {
   systemName: 'sys',

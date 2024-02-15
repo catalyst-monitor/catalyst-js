@@ -2,18 +2,18 @@
  * @jest-environment ../../../jest.fixjsdom.ts
  */
 
-import { CatalystClient } from './client'
+import { CatalystClient } from './client.js'
 import {
   FrontEndInfo,
   LogSeverity,
   SendFrontendEventsRequest,
   SendFrontendEventsRequest_Event,
-} from './gen/library_pb'
+} from './gen/library_pb.js'
 import {
   PAGE_VIEW_ID_HEADER,
   PUBLIC_KEY_HEADER,
   SESSION_ID_HEADER,
-} from './common'
+} from './common.js'
 import { Timestamp } from '@bufbuild/protobuf'
 
 jest.useFakeTimers()

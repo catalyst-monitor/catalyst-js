@@ -2,14 +2,14 @@ export {
   CatalystServer,
   CatalystServerConfig,
   ServerRequestContext,
-} from './server'
-export { catalystNodeFetch, installNodeBase, getCatalystNode } from './node'
+} from './server.js'
+export { catalystNodeFetch, installNodeBase, getCatalystNode } from './node.js'
 export {
   CatalystContextType,
   createCatalystContext,
   updateCatalystContext,
   getCatalystContext,
-} from './async_hooks'
+} from './async_hooks.js'
 export {
   Severity,
   COOKIE_NAME,
@@ -17,4 +17,4 @@ export {
   PARENT_FETCH_ID_HEADER,
   PAGE_VIEW_ID_HEADER,
   installConsoleWrappers,
-} from './common'
+} from './common.js'

@@ -1,4 +1,4 @@
-export { CatalystClient, CatalystClientConfig } from './client'
+export { CatalystClient, CatalystClientConfig } from './client.js'
 export {
   Severity,
   COOKIE_NAME,
@@ -6,5 +6,5 @@ export {
   PARENT_FETCH_ID_HEADER,
   PAGE_VIEW_ID_HEADER,
   installConsoleWrappers,
-} from './common'
-export { getCatalystWeb, installWebBase, catalystWebFetch } from './web'
+} from './common.js'
+export { getCatalystWeb, installWebBase, catalystWebFetch } from './web.js'

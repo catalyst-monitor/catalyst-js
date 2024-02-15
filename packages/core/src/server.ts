@@ -7,7 +7,7 @@ import {
   Severity,
   objectToParams,
   toProtoSeverity,
-} from './common'
+} from './common.js'
 import {
   Fetch,
   Log,
@@ -15,7 +15,7 @@ import {
   SendBackendEventsRequest,
   SendBackendEventsRequest_Event,
   TraceInfo,
-} from './gen/library_pb'
+} from './gen/library_pb.js'
 
 export interface CatalystServerConfig {
   baseUrl?: string

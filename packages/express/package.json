@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "license": "GPL-3.0-or-later",
   "types": "dist/index.d.ts",
+  "type": "module",
   "files": [
     "/dist"
   ],

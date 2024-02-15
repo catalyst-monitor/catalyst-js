@@ -1,6 +1,6 @@
-import { createCatalystContext } from './async_hooks'
-import { PARENT_FETCH_ID_HEADER, SESSION_ID_HEADER } from './common'
-import { catalystNodeFetch, getCatalystNode, installNodeBase } from './node'
+import { createCatalystContext } from './async_hooks.js'
+import { PARENT_FETCH_ID_HEADER, SESSION_ID_HEADER } from './common.js'
+import { catalystNodeFetch, getCatalystNode, installNodeBase } from './node.js'
 
 const config = {
   privateKey: 'key',
