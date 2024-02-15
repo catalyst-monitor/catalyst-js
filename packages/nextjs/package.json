@@ -1,7 +1,7 @@
 {
   "name": "@catalyst-monitor/nextjs",
-  "version": "0.0.13",
-  "license": "GPL-3.0-or-later",
+  "version": "0.0.14",
+  "license": "Apache-2.0",
   "files": [
     "/dist"
   ],
@@ -48,7 +48,7 @@
     "singleQuote": true
   },
   "dependencies": {
-    "@catalyst-monitor/core": "^0.0.11",
+    "@catalyst-monitor/core": "workspace:^",
     "date-fns": "^2.30.0"
   }
 }
