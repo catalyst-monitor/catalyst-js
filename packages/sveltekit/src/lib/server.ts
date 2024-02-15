@@ -1,3 +1,4 @@
+export * from '@catalyst-monitor/core/node'
 import type { Handle, HandleFetch, HandleServerError } from '@sveltejs/kit'
 import {
   createCatalystContext,
@@ -13,6 +14,7 @@ import { getRouteParams } from './util.js'
 export const catalystHandler: Handle = async ({ event, resolve }) => {
   const {
     cookies,
+    url,
     route,
     params,
     request: { method, headers },
@@ -27,26 +29,46 @@ export const catalystHandler: Handle = async ({ event, resolve }) => {
     fetchId: crypto.randomUUID(),
     pageViewId: headers.get(PAGE_VIEW_ID_HEADER) ?? undefined,
   }
-  const startTime = new Date()
-  return createCatalystContext(context, async () => {
-    const resp = await resolve(event)
-    const endTime = new Date()
-    const populatedParams = getRouteParams(params)
-    const millisDiff = endTime.getTime() - startTime.getTime()
-    getCatalystNode().recordFetch(
-      method,
-      route.id ?? 'Unknown',
-      populatedParams,
-      resp.status,
-      {
-        seconds: Math.floor(millisDiff / 1000),
-        nanos: (millisDiff % 1000) * 1000000,
-      },
-      context
-    )
 
-    return resp
-  })
+  if (cookies.get(COOKIE_NAME) == null) {
+    cookies.set(COOKIE_NAME, context.sessionId, {
+      path: '/',
+      sameSite: 'strict',
+      httpOnly: false,
+    })
+  }
+
+  const startTime = new Date()
+  const resp = await createCatalystContext(context, () => resolve(event))
+  const endTime = new Date()
+
+  let pattern = route.id
+  if (pattern != null && method == 'POST') {
+    for (const key of url.searchParams.keys()) {
+      if (key.startsWith('/')) {
+        pattern += `?${key}`
+        break
+      }
+    }
+  } else if (pattern == null) {
+    pattern = 'Unknown'
+  }
+
+  const populatedParams = getRouteParams(params)
+  const millisDiff = endTime.getTime() - startTime.getTime()
+  getCatalystNode().recordFetch(
+    method,
+    pattern,
+    populatedParams,
+    resp.status,
+    {
+      seconds: Math.floor(millisDiff / 1000),
+      nanos: (millisDiff % 1000) * 1000000,
+    },
+    context
+  )
+
+  return resp
 }
 
 export function wrapCatalystServerErrorHandler(

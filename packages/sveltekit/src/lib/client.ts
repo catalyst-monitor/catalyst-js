@@ -1,3 +1,4 @@
+export * from '@catalyst-monitor/core/web'
 import { getCatalystWeb } from '@catalyst-monitor/core/web'
 import type { HandleClientError } from '@sveltejs/kit'
 
