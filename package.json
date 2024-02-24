@@ -1,7 +1,8 @@
 {
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "packages/nextjs/test"
   ],
   "scripts": {
     "test": "jest"
