@@ -7,20 +7,20 @@ const config = {
         '^.+\\.ts$': [
           'ts-jest',
           {
-            tsconfig: 'packages/core/tsconfig-cjs.json',
+            tsconfig: 'packages/core/tsconfig.json',
             useESM: true,
           },
         ],
       },
-      roots: [
-        '<rootDir>/packages/core/src',
-        '<rootDir>/packages/core/src/gen',
-      ],
+      moduleNameMapper: {
+        '^(\\.\\.?\\/.+)\\.jsx?$': '$1',
+      },
+      extensionsToTreatAsEsm: ['.ts'],
+      roots: ['<rootDir>/packages/core/src', '<rootDir>/packages/core/src/gen'],
       displayName: 'core',
       testMatch: ['<rootDir>/packages/core/src/(*.)+test\\.ts'],
-      
-    }
-  ]
-};
+    },
+  ],
+}
 
-module.exports = config;
+module.exports = config
