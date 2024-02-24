@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'async_hooks'
 import {
   createCatalystContext,
   COOKIE_NAME,
@@ -9,7 +10,6 @@ import {
   installConsoleWrappers,
   getCatalystContext,
 } from '@catalyst-monitor/core/node'
-import { AsyncLocalStorage } from 'async_hooks'
 import {
   requestAsyncStorage,
   RequestStore,
@@ -119,7 +119,7 @@ export function wrapRouteHandler(
   path: string,
   original: (
     req: NextRequest,
-    options?: { params?: { [key: string]: string } }
+    dynamicRouteOptions?: { params?: { [key: string]: string } }
   ) => NextResponse | Promise<NextResponse> | null
 ) {
   globalCatalystOptions = options
@@ -127,7 +127,7 @@ export function wrapRouteHandler(
 
   return (
     req: NextRequest,
-    options?: { params?: { [key: string]: string } }
+    dynamicRouteOptions?: { params?: { [key: string]: string } }
   ) => {
     const context = {
       sessionId:
@@ -141,7 +141,7 @@ export function wrapRouteHandler(
     const startTime = new Date()
     return wrapResults(
       context,
-      () => original(req),
+      () => original(req, dynamicRouteOptions),
       async (val) => {
         let statusCode = 200
         if (val instanceof NextResponse) {
@@ -150,7 +150,7 @@ export function wrapRouteHandler(
         getCatalystNextJS().recordFetch(
           method,
           path,
-          options?.params ?? {},
+          dynamicRouteOptions?.params ?? {},
           statusCode,
           {
             seconds: differenceInSeconds(new Date(), startTime),
@@ -165,7 +165,7 @@ export function wrapRouteHandler(
         getCatalystNextJS().recordFetch(
           method,
           path,
-          options?.params ?? {},
+          dynamicRouteOptions?.params ?? {},
           500,
           {
             seconds: differenceInSeconds(new Date(), startTime),
@@ -313,7 +313,7 @@ function installNextJS() {
   return server
 }
 
-function getCatalystNextJS(): CatalystServer {
+export function getCatalystNextJS(): CatalystServer {
   if (globalThis.__catalystNextJSInstance == null) {
     throw new Error(
       'We could not get the Catalyst instance! Please report this bug.'

@@ -1,8 +1,17 @@
-import async_hooks from 'async_hooks'
+import type { AsyncLocalStorage } from 'async_hooks'
 import { ServerRequestContext } from './server.js'
 
-const doctorContextStorage =
-  new async_hooks.AsyncLocalStorage<CatalystContextType>()
+let doctorContextStorage: AsyncLocalStorage<CatalystContextType> | null = null
+if (typeof window == 'undefined') {
+  import('async_hooks').then(
+    ({ AsyncLocalStorage }) => {
+      doctorContextStorage = new AsyncLocalStorage<CatalystContextType>()
+    },
+    () => {
+      // Do Nothing
+    }
+  )
+}
 
 export interface CatalystContextType {
   context: ServerRequestContext
