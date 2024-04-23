@@ -96,15 +96,14 @@ export class CatalystClient {
     }
   }
 
-  setUserCreds({
-    loggedInEmail,
-    loggedInId,
-  }: {
-    loggedInEmail: string
-    loggedInId: string
-  }) {
-    this.loggedInEmail = loggedInEmail
-    this.loggedInId = loggedInId
+  setUserInfo(
+    userInfo: {
+      loggedInUserName: string
+      loggedInId: string
+    } | null
+  ) {
+    this.loggedInEmail = userInfo?.loggedInUserName ?? null
+    this.loggedInId = userInfo?.loggedInId ?? null
   }
 
   get pageViewId() {

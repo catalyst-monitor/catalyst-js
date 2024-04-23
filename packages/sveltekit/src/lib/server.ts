@@ -20,18 +20,20 @@ export const catalystHandler: Handle = async ({ event, resolve }) => {
     request: { method, headers },
   } = event
 
-  const context = {
-    sessionId:
-      headers.get(SESSION_ID_HEADER) ??
-      cookies.get(COOKIE_NAME) ??
-      crypto.randomUUID(),
-    parentFetchId: headers.get(PARENT_FETCH_ID_HEADER) ?? undefined,
-    fetchId: crypto.randomUUID(),
-    pageViewId: headers.get(PAGE_VIEW_ID_HEADER) ?? undefined,
+  const store = {
+    context: {
+      sessionId:
+        headers.get(SESSION_ID_HEADER) ??
+        cookies.get(COOKIE_NAME) ??
+        crypto.randomUUID(),
+      parentFetchId: headers.get(PARENT_FETCH_ID_HEADER) ?? undefined,
+      fetchId: crypto.randomUUID(),
+      pageViewId: headers.get(PAGE_VIEW_ID_HEADER) ?? undefined,
+    },
   }
 
   if (cookies.get(COOKIE_NAME) == null) {
-    cookies.set(COOKIE_NAME, context.sessionId, {
+    cookies.set(COOKIE_NAME, store.context.sessionId, {
       path: '/',
       sameSite: 'strict',
       httpOnly: false,
@@ -39,7 +41,7 @@ export const catalystHandler: Handle = async ({ event, resolve }) => {
   }
 
   const startTime = new Date()
-  const resp = await createCatalystContext(context, () => resolve(event))
+  const resp = await createCatalystContext(store, () => resolve(event))
   const endTime = new Date()
 
   let pattern = route.id
@@ -65,7 +67,7 @@ export const catalystHandler: Handle = async ({ event, resolve }) => {
       seconds: Math.floor(millisDiff / 1000),
       nanos: (millisDiff % 1000) * 1000000,
     },
-    context
+    store.context
   )
 
   return resp

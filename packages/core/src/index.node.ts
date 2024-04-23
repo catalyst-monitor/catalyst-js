@@ -5,9 +5,10 @@ export {
 } from './server.js'
 export { catalystNodeFetch, installNodeBase, getCatalystNode } from './node.js'
 export {
-  CatalystContextType,
+  CatalystContextStoreType,
   createCatalystContext,
   updateCatalystContext,
+  updateCatalystUserInfoContext,
   getCatalystContext,
 } from './async_hooks.js'
 export {

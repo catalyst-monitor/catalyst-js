@@ -330,7 +330,7 @@ async function wrapResults<R>(
 ): Promise<R> {
   let value
   try {
-    value = await promisify(createCatalystContext(context, () => toWrap()))
+    value = await promisify(createCatalystContext({ context }, () => toWrap()))
   } catch (e) {
     await promisify(onError(e))
     throw e

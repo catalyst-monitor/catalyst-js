@@ -29,14 +29,16 @@ export const catalystHandler: RequestHandler = (req, res, next) => {
   const pageViewId = req.headers[PAGE_VIEW_ID_HEADER.toLowerCase()]
   const parentFetchId = req.headers[PARENT_FETCH_ID_HEADER.toLowerCase()]
 
-  const context: ServerRequestContext = {
-    fetchId: crypto.randomUUID(),
-    sessionId: getHeader(sessionId) ?? crypto.randomUUID(),
-    pageViewId: getHeader(pageViewId),
-    parentFetchId: getHeader(parentFetchId),
+  const store = {
+    context: {
+      fetchId: crypto.randomUUID(),
+      sessionId: getHeader(sessionId) ?? crypto.randomUUID(),
+      pageViewId: getHeader(pageViewId),
+      parentFetchId: getHeader(parentFetchId),
+    },
   }
 
-  createCatalystContext(context, () => {
+  createCatalystContext(store, () => {
     try {
       res.on('finish', () => {
         getCatalystNode().recordFetch(

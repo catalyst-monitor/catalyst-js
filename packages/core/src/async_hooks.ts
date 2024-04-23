@@ -1,11 +1,12 @@
 import type { AsyncLocalStorage } from 'async_hooks'
 import { ServerRequestContext } from './server.js'
 
-let doctorContextStorage: AsyncLocalStorage<CatalystContextType> | null = null
+let doctorContextStorage: AsyncLocalStorage<CatalystContextStoreType> | null =
+  null
 if (typeof window == 'undefined') {
   import('async_hooks').then(
     ({ AsyncLocalStorage }) => {
-      doctorContextStorage = new AsyncLocalStorage<CatalystContextType>()
+      doctorContextStorage = new AsyncLocalStorage<CatalystContextStoreType>()
     },
     () => {
       // Do Nothing
@@ -13,23 +14,18 @@ if (typeof window == 'undefined') {
   )
 }
 
-export interface CatalystContextType {
+export interface CatalystContextStoreType {
   context: ServerRequestContext
 }
 
 export function createCatalystContext<T>(
-  context: ServerRequestContext,
+  store: CatalystContextStoreType,
   callback: () => T
 ): T {
   if (doctorContextStorage == null) {
     return callback()
   }
-  return doctorContextStorage.run(
-    {
-      context,
-    },
-    callback
-  )
+  return doctorContextStorage.run(store, callback)
 }
 
 export function updateCatalystContext(context: ServerRequestContext) {
@@ -37,6 +33,23 @@ export function updateCatalystContext(context: ServerRequestContext) {
   if (store != null) {
     store.context = context
   }
+}
+
+export function updateCatalystUserInfoContext(
+  loginContext: { loggedInUserName: string; loggedInId: string } | null
+) {
+  const context = getCatalystContext()
+  if (context == null) {
+    console.warn(
+      'Catalyst: tried to update login context without first setting a context!'
+    )
+    return
+  }
+  updateCatalystContext({
+    ...context,
+    loggedInUserName: loginContext?.loggedInUserName,
+    loggedInId: loginContext?.loggedInId,
+  })
 }
 
 export function getCatalystContext(): ServerRequestContext | undefined {

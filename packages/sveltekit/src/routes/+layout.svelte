@@ -1,13 +1,30 @@
 <script lang="ts">
   import Catalyst from '$lib/Catalyst.svelte'
+  import { getCatalystWeb } from '$lib/client.js'
+  import { browser } from '$app/environment'
 
   export let data
+
+  if (browser) {
+    getCatalystWeb().setUserInfo(
+      data.user != null
+        ? { loggedInId: data.user.id, loggedInUserName: data.user.userName }
+        : null
+    )
+  }
 </script>
 
 <Catalyst />
 <h1>Catalyst Sveltekit</h1>
 
+{#if data.user != null}
+  <div><strong>You are logged in as: {data.user.userName}</strong></div>
+{:else}
+  <div><strong>You are not logged in</strong></div>
+{/if}
+
 <div class="links">
+  <a href="/">Back home</a>
   <a href="/server">Server Actions</a>
   <a href="/actions">Actions</a>
   <a href="/components/layout">Layout Component</a>
@@ -21,6 +38,7 @@
     >Page Universal Loading</a
   >
 </div>
+
 <slot />
 
 <style>

@@ -50,8 +50,10 @@ describe('with installNodeBase called', () => {
 
   test('installNodeBase console functions creates events', () => {
     const ctx = {
-      fetchId: '1',
-      sessionId: '2',
+      context: {
+        fetchId: '1',
+        sessionId: '2',
+      },
     }
 
     createCatalystContext(ctx, () => {
@@ -104,12 +106,14 @@ describe('with installNodeBase called', () => {
 
   test('catalystNodeFetch uses context', () => {
     const val = {
-      fetchId: '1',
-      sessionId: '2',
-      loggedInEmail: '3',
-      loggedInId: '4',
-      pageViewId: '5',
-      parentFetchId: '6',
+      context: {
+        fetchId: '1',
+        sessionId: '2',
+        loggedInEmail: '3',
+        loggedInId: '4',
+        pageViewId: '5',
+        parentFetchId: '6',
+      },
     }
     createCatalystContext(val, () => {
       catalystNodeFetch('https://test.com')
@@ -136,8 +140,10 @@ describe('with installNodeBase called', () => {
 
   test('catalystNodeFetch accepts all signature of fetch', () => {
     const val = {
-      fetchId: '1',
-      sessionId: '2',
+      context: {
+        fetchId: '1',
+        sessionId: '2',
+      },
     }
     createCatalystContext(val, () => {
       catalystNodeFetch('https://test.com')

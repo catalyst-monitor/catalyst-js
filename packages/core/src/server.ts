@@ -195,7 +195,7 @@ export class CatalystServer {
 export interface ServerRequestContext {
   fetchId: string
   sessionId: string
-  loggedInEmail?: string
+  loggedInUserName?: string
   loggedInId?: string
   pageViewId?: string
   parentFetchId?: string
@@ -205,7 +205,7 @@ function contextToTrace(context: ServerRequestContext): TraceInfo {
   return new TraceInfo({
     fetchId: context.fetchId,
     sessionId: context.sessionId,
-    loggedInEmail: context.loggedInEmail ?? '',
+    loggedInEmail: context.loggedInUserName ?? '',
     loggedInId: context.loggedInId ?? '',
     pageViewId: context.pageViewId ?? '',
     parentFetchId: context.parentFetchId ?? '',

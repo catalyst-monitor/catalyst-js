@@ -153,7 +153,7 @@ test('recordFetch correctly populates context', async () => {
       sessionId: '2',
       pageViewId: '3',
       parentFetchId: '4',
-      loggedInEmail: 'email',
+      loggedInUserName: 'email',
       loggedInId: 'id',
     }
   )
@@ -247,7 +247,7 @@ test('recordLog correctly populates context', async () => {
       sessionId: '2',
       pageViewId: '3',
       parentFetchId: '4',
-      loggedInEmail: 'email',
+      loggedInUserName: 'email',
       loggedInId: 'id',
     }
   )
