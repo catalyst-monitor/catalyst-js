@@ -10,8 +10,8 @@
     "/dist"
   ],
   "scripts": {
-    "prebuild": "eslint src/**/*",
-    "build": "yarn prebuild && rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json"
+    "lint": "eslint src/**/*",
+    "build": "yarn lint && rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json"
   },
   "dependencies": {
     "@catalyst-monitor/core": "workspace:^",

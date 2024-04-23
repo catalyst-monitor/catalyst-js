@@ -30,8 +30,8 @@
   },
   "sideEffects": false,
   "scripts": {
-    "prebuild": "eslint src/**/*",
-    "build": "yarn prebuild && rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
+    "lint": "eslint src/**/*",
+    "build": "yarn lint && rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
   },
   "devDependencies": {
     "@bufbuild/protoc-gen-es": "^1.5.0",

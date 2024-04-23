@@ -1,8 +1,8 @@
-# @catalyst-monitor/sveltekit
+# @catalyst-monitor/nextjs
 
-This is the SvelteKit library for [Catalyst](https://www.catalystmonitor.com).
+This is the Next.JS (App Router) library for [Catalyst](https://www.catalystmonitor.com).
 
-In order to not duplicate documentation, please find the most up-to-date documentation [here](https://www.catalystmonitor.com/docs/install/javascript/sveltekit).
+In order to not duplicate documentation, please find the most up-to-date documentation [here](https://www.catalystmonitor.com/docs/install/javascript/nextjs).
 
 ## Developing
 
@@ -11,8 +11,10 @@ In order to not duplicate documentation, please find the most up-to-date documen
 To build the library:
 
 ```bash
-yarn package
+yarn build
 ```
+
+Please note that we use
 
 ### Developing in the Sandbox
 
