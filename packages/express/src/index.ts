@@ -2,7 +2,6 @@ import { ErrorRequestHandler, RequestHandler } from 'express'
 import {
   createCatalystContext,
   getCatalystNode,
-  ServerRequestContext,
   SESSION_ID_HEADER,
   PAGE_VIEW_ID_HEADER,
   PARENT_FETCH_ID_HEADER,
@@ -52,12 +51,12 @@ export const catalystHandler: RequestHandler = (req, res, next) => {
             ),
             nanos: 0,
           },
-          context
+          store.context
         )
       })
       next()
     } catch (e) {
-      getCatalystNode().recordLog('error', e, {}, context)
+      getCatalystNode().recordLog('error', e, {}, store.context)
       throw e
     }
   })
