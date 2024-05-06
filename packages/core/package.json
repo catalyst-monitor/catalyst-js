@@ -30,8 +30,9 @@
   },
   "sideEffects": false,
   "scripts": {
+    "proto": "rm -rf src/gen/ && mkdir -p src/gen/ && yarn protoc -I=../../proto --es_opt target=ts --es_out=src/gen/ ../../proto/*.proto",
     "lint": "eslint src/**/*",
-    "build": "yarn lint && rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
+    "build": "yarn proto && yarn lint && rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
   },
   "devDependencies": {
     "@bufbuild/protoc-gen-es": "^1.5.0",
@@ -41,6 +42,7 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "prettier": "^3.0.3",
+    "protoc": "^1.1.3",
     "typescript": "^5.2.2"
   },
   "prettier": {
