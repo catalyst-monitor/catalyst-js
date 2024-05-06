@@ -8,11 +8,16 @@ import {
 import { sequence } from '@sveltejs/kit/hooks'
 import { COOKIE_NAME, getUserName } from './fakeAuth.server.js'
 import type { Handle } from '@sveltejs/kit'
+import {
+  PUBLIC_CATALYST_SYSTEM_NAME,
+  PUBLIC_CATALYST_VERSION,
+} from '$env/static/public'
+import { CATALYST_PRIVATE_KEY } from '$env/static/private'
 
 installNodeBase({
-  privateKey: 'CqZNUYrUBaqcsacZCfSO/e4afBQ98WOqFdHQT7N6',
-  systemName: 'catalyst-sveltekit-example',
-  version: '0.0.1',
+  privateKey: CATALYST_PRIVATE_KEY,
+  systemName: PUBLIC_CATALYST_SYSTEM_NAME,
+  version: PUBLIC_CATALYST_VERSION,
   baseUrl: 'http://localhost:7070',
 })
 

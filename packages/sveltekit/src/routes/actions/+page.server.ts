@@ -5,4 +5,11 @@ export const actions = {
   log: async () => {
     console.log('Log from action')
   },
+  random: async () => {
+    const random = Math.random() * 6
+    if (random >= 5) {
+      throw new Error('Got random error!')
+    }
+    return { randomValue: random }
+  }
 }

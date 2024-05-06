@@ -11,3 +11,8 @@
 <form method="POST" action="?/log">
   <button>Cause a log</button>
 </form>
+
+<form method="POST" action="?/random">
+  <button>Maybe cause an error?</button>
+  <div>Random value: {form?.randomValue ?? 'Nothing yet'}</div>
+</form>
