@@ -17,7 +17,7 @@ test('getCatalystContext gets context', () => {
     },
   }
   createCatalystContext(val, () => {
-    expect(getCatalystContext()).toBe(val)
+    expect(getCatalystContext()).toBe(val.context)
   })
 })
 

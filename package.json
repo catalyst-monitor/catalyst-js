@@ -7,6 +7,8 @@
   "scripts": {
     "lint": "yarn workspaces foreach -A --include \"@catalyst-monitor/*\" run lint",
     "build": "yarn workspaces foreach -A --include \"@catalyst-monitor/*\" run build",
+    "publishOnly": "yarn workspaces foreach -A --include \"@catalyst-monitor/*\" npm publish --access public",
+    "publish": "yarn lint && yarn build && yarn test && yarn publishOnly",
     "test": "jest"
   },
   "prettier": {

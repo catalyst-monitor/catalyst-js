@@ -14,15 +14,15 @@ To build the library:
 yarn build
 ```
 
-Please note that we use
-
 ### Developing in the Sandbox
 
-The code includes a sandbox SvelteKit app that you can run to test the library. Nothing in the sandbox will be included in the packaged library, only files in `src/lib` will be included.
+The code includes a sandbox Next.JS app that you can run to test the library, with common use-cases for Catalyst.
 
 To start the sandbox, simply run:
 
 ```bash
+cd test
+
 yarn dev
 
 # or start the server and open the app in a new browser tab

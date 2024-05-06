@@ -65,7 +65,7 @@ describe('with installNodeBase called', () => {
       'info',
       'hi1',
       { 1: 'hi2' },
-      ctx,
+      ctx.context,
     ])
     expect(oldLogSpy).toHaveBeenCalled()
     expect(oldLogSpy.mock.calls[0]).toStrictEqual(['hi1', 'hi2'])
@@ -80,7 +80,7 @@ describe('with installNodeBase called', () => {
       'warn',
       'warn1',
       { 1: 'warn2' },
-      ctx,
+      ctx.context,
     ])
     expect(oldWarnSpy).toHaveBeenCalled()
     expect(oldWarnSpy.mock.calls[0]).toStrictEqual(['warn1', 'warn2'])
@@ -91,7 +91,12 @@ describe('with installNodeBase called', () => {
     })
 
     expect(recordLogSpy).toHaveBeenCalled()
-    expect(recordLogSpy.mock.calls[0]).toStrictEqual(['error', 'hi3', {}, ctx])
+    expect(recordLogSpy.mock.calls[0]).toStrictEqual([
+      'error',
+      'hi3',
+      {},
+      ctx.context,
+    ])
     expect(oldErrorSpy).toHaveBeenCalled()
     expect(oldErrorSpy.mock.calls[0]).toStrictEqual(['hi3'])
   })
