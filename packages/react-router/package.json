@@ -1,6 +1,6 @@
 {
   "name": "@catalyst-monitor/react-router",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Sets up Catalyst monitoring for React Router.",
   "main": "dist/index.js",
   "license": "Apache-2.0",

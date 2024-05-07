@@ -18,7 +18,6 @@ export const catalystHandler: Handle = async ({ event, resolve }) => {
     route,
     params,
     request: { method, headers },
-    isDataRequest,
   } = event
 
   const store = {
@@ -40,8 +39,6 @@ export const catalystHandler: Handle = async ({ event, resolve }) => {
       httpOnly: false,
     })
   }
-
-  console.log('IS', isDataRequest, route)
 
   const startTime = new Date()
   const resp = await createCatalystContext(store, () => resolve(event))

@@ -1,6 +1,6 @@
 {
   "name": "@catalyst-monitor/express",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Sets up Catalyst monitoring for Express.",
   "main": "dist/index.js",
   "license": "Apache-2.0",
