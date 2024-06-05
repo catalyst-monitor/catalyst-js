@@ -1,6 +1,6 @@
 {
   "name": "@catalyst-monitor/nextjs",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "license": "Apache-2.0",
   "files": [
     "/dist"
@@ -30,7 +30,8 @@
     "./route-handler-loader": "./dist/route-handler-loader.js"
   },
   "scripts": {
-    "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p ."
+    "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p .",
+    "lint": "prettier --check ./src && eslint ./src"
   },
   "devDependencies": {
     "@babel/generator": "^7.23.4",

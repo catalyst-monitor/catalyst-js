@@ -67,6 +67,7 @@ describe('web', () => {
   const mockFetch = jest.fn((_1, _2) => Promise.resolve(new Response()))
   let recordLogSpy: jest.SpyInstance
   let recordClickSpy: jest.SpyInstance
+  let recordErrorSpy: jest.SpyInstance
   let oldWarnSpy: jest.SpyInstance
   let oldLogSpy: jest.SpyInstance
   let oldErrorSpy: jest.SpyInstance
@@ -81,9 +82,14 @@ describe('web', () => {
     // to be created and torn down multiple times, which makes
     // testing harder.
     const client = installWebBase(config)
-    client.recordPageView('/test', {})
+    client.recordPageView({
+      pathPattern: '/test',
+      rawPath: '/test',
+      args: {},
+    })
     recordLogSpy = jest.spyOn(client, 'recordLog')
     recordClickSpy = jest.spyOn(client, 'recordClick')
+    recordErrorSpy = jest.spyOn(client, 'recordError')
   })
 
   afterEach(() => {
@@ -105,38 +111,64 @@ describe('web', () => {
     expect(console.__catalystOldLog).not.toBeNull()
   })
 
-  test('installWebBase console functions creates events', () => {
-    console.log('hi1', 'hi2')
+  describe('installWebBase console functions creates events', () => {
+    test('log', () => {
+      console.log('hi1', 'hi2')
 
-    expect(recordLogSpy).toHaveBeenCalled()
-    expect(recordLogSpy.mock.calls[0]).toStrictEqual([
-      'info',
-      'hi1',
-      { 1: 'hi2' },
-    ])
-    expect(oldLogSpy).toHaveBeenCalled()
-    expect(oldLogSpy.mock.calls[0]).toStrictEqual(['hi1', 'hi2'])
+      expect(recordLogSpy).toHaveBeenCalled()
+      expect(recordLogSpy.mock.calls[0]).toStrictEqual([
+        {
+          severity: 'info',
+          message: 'hi1',
+          rawMessage: 'hi1 hi2',
+          args: { 1: 'hi2' },
+        },
+      ])
+      expect(oldLogSpy).toHaveBeenCalled()
+      expect(oldLogSpy.mock.calls[0]).toStrictEqual(['hi1', 'hi2'])
+    })
 
-    jest.resetAllMocks()
+    test('warn', () => {
+      console.warn('warn1', 'warn2')
 
-    console.warn('warn1', 'warn2')
+      expect(recordLogSpy).toHaveBeenCalled()
+      expect(recordLogSpy.mock.calls[0]).toStrictEqual([
+        {
+          severity: 'warn',
+          message: 'warn1',
+          rawMessage: 'warn1 warn2',
+          args: { 1: 'warn2' },
+        },
+      ])
+      expect(oldWarnSpy).toHaveBeenCalled()
+      expect(oldWarnSpy.mock.calls[0]).toStrictEqual(['warn1', 'warn2'])
+    })
 
-    expect(recordLogSpy).toHaveBeenCalled()
-    expect(recordLogSpy.mock.calls[0]).toStrictEqual([
-      'warn',
-      'warn1',
-      { 1: 'warn2' },
-    ])
-    expect(oldWarnSpy).toHaveBeenCalled()
-    expect(oldWarnSpy.mock.calls[0]).toStrictEqual(['warn1', 'warn2'])
+    test('error', () => {
+      console.error('hi3')
 
-    jest.resetAllMocks()
-    console.error('hi3')
+      expect(recordLogSpy).toHaveBeenCalled()
+      expect(recordLogSpy.mock.calls[0]).toStrictEqual([
+        {
+          severity: 'error',
+          message: 'hi3',
+          rawMessage: 'hi3',
+          args: {},
+        },
+      ])
+      expect(oldErrorSpy).toHaveBeenCalled()
+      expect(oldErrorSpy.mock.calls[0]).toStrictEqual(['hi3'])
+    })
+  })
 
-    expect(recordLogSpy).toHaveBeenCalled()
-    expect(recordLogSpy.mock.calls[0]).toStrictEqual(['error', 'hi3', {}])
+  test('installWebBase console functions handles errors', () => {
+    const error = new Error('hi')
+    console.error(error)
+
+    expect(recordErrorSpy).toHaveBeenCalled()
+    expect(recordErrorSpy.mock.calls[0]).toStrictEqual(['error', error])
     expect(oldErrorSpy).toHaveBeenCalled()
-    expect(oldErrorSpy.mock.calls[0]).toStrictEqual(['hi3'])
+    expect(oldErrorSpy.mock.calls[0]).toStrictEqual([error])
   })
 
   test('installWebBase records uncaught errors', () => {
@@ -147,12 +179,8 @@ describe('web', () => {
       })
     )
 
-    expect(recordLogSpy).toHaveBeenCalled()
-    expect(recordLogSpy.mock.calls[0]).toStrictEqual([
-      'error',
-      errorInstance,
-      {},
-    ])
+    expect(recordErrorSpy).toHaveBeenCalled()
+    expect(recordErrorSpy.mock.calls[0]).toStrictEqual(['error', errorInstance])
   })
 
   // Doesn't seem to want to finish for some reason.
@@ -166,12 +194,8 @@ describe('web', () => {
       })
     )
 
-    expect(recordLogSpy).toHaveBeenCalled()
-    expect(recordLogSpy.mock.calls[0]).toStrictEqual([
-      'error',
-      errorInstance,
-      {},
-    ])
+    expect(recordErrorSpy).toHaveBeenCalled()
+    expect(recordErrorSpy.mock.calls[0]).toStrictEqual(['error', errorInstance])
   })
 
   test('installWebBase records clicks', () => {

@@ -31,7 +31,15 @@ test('flushEvents sends nothing if disabled', async () => {
   }
   const client = new CatalystServer(config, () => '1')
   jest.advanceTimersByTime(1000)
-  client.recordLog('warn', 'a', {}, { fetchId: '1', sessionId: '1' })
+  client.recordLog(
+    {
+      severity: 'warn',
+      message: 'a',
+      rawMessage: 'a',
+      args: {},
+    },
+    { fetchId: '1', sessionId: '1' }
+  )
   jest.advanceTimersByTime(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(0)
@@ -53,8 +61,24 @@ test('flushEvents calls and batches events', async () => {
 
   expect(mockFetch).not.toHaveBeenCalled()
 
-  client.recordLog('warn', 'a', {}, { fetchId: '1', sessionId: '1' })
-  client.recordLog('warn', 'a', {}, { fetchId: '1', sessionId: '1' })
+  client.recordLog(
+    {
+      severity: 'warn',
+      message: 'a',
+      rawMessage: 'a',
+      args: {},
+    },
+    { fetchId: '1', sessionId: '1' }
+  )
+  client.recordLog(
+    {
+      severity: 'warn',
+      message: 'a',
+      rawMessage: 'a',
+      args: {},
+    },
+    { fetchId: '1', sessionId: '1' }
+  )
   jest.advanceTimersByTime(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
@@ -74,7 +98,15 @@ test('flushEvents retries', async () => {
   }
   const client = new CatalystServer(config, () => '1')
   mockFetch.mockImplementationOnce(() => Promise.reject(new Error('hi')))
-  client.recordLog('warn', 'a', {}, { fetchId: '1', sessionId: '1' })
+  client.recordLog(
+    {
+      severity: 'warn',
+      message: 'a',
+      rawMessage: 'a',
+      args: {},
+    },
+    { fetchId: '1', sessionId: '1' }
+  )
   const recordTime = Timestamp.now()
   await jest.advanceTimersByTimeAsync(1000)
 
@@ -91,6 +123,7 @@ test('flushEvents retries', async () => {
     value: new Log({
       time: recordTime,
       message: 'a',
+      rawMessage: 'a',
       logSeverity: LogSeverity.WARNING_LOG_SEVERITY,
       id: '1',
     }),
@@ -106,7 +139,15 @@ test('flushEvents retries with max event count', async () => {
   }
   const client = new CatalystServer(config, () => '1')
   for (let i = 0; i < 1002; i++) {
-    client.recordLog('warn', 'b', {}, { fetchId: '1', sessionId: '1' })
+    client.recordLog(
+      {
+        severity: 'warn',
+        message: 'b',
+        rawMessage: 'b',
+        args: {},
+      },
+      { fetchId: '1', sessionId: '1' }
+    )
   }
   const recordTime = Timestamp.now()
   mockFetch.mockImplementationOnce(() => Promise.reject(new Error('hi')))
@@ -127,6 +168,7 @@ test('flushEvents retries with max event count', async () => {
       value: new Log({
         time: recordTime,
         message: 'b',
+        rawMessage: 'b',
         logSeverity: LogSeverity.WARNING_LOG_SEVERITY,
         id: '1',
       }),
@@ -143,11 +185,14 @@ test('recordFetch correctly populates context', async () => {
   }
   const client = new CatalystServer(config, () => '1-1-1')
   client.recordFetch(
-    'get',
-    '/test',
-    {},
-    200,
-    { seconds: 5, nanos: 10 },
+    {
+      method: 'get',
+      pathPattern: '/test',
+      args: {},
+      rawPath: '/test',
+      statusCode: 200,
+      duration: { seconds: 5, nanos: 10 },
+    },
     {
       fetchId: '1',
       sessionId: '2',
@@ -192,14 +237,17 @@ test('recordFetch correctly sends event', async () => {
   }
   const client = new CatalystServer(config, () => '1-1-1')
   client.recordFetch(
-    'get',
-    '/test',
     {
-      test1: '1',
-      test2: '2',
+      method: 'get',
+      pathPattern: '/test/{test1}/{test2}',
+      rawPath: '/test/1/2',
+      args: {
+        test1: '1',
+        test2: '2',
+      },
+      statusCode: 200,
+      duration: { seconds: 5, nanos: 10 },
     },
-    200,
-    { seconds: 5, nanos: 10 },
     {
       fetchId: '1',
       sessionId: '2',
@@ -218,7 +266,8 @@ test('recordFetch correctly sends event', async () => {
       endTime: recordTime,
       method: 'get',
       path: {
-        pattern: '/test',
+        pattern: '/test/{test1}/{test2}',
+        rawPath: '/test/1/2',
         params: [
           { argValue: '1', paramName: 'test1' },
           { argValue: '2', paramName: 'test2' },
@@ -239,9 +288,12 @@ test('recordLog correctly populates context', async () => {
   }
   const client = new CatalystServer(config, () => '1-1-1')
   client.recordLog(
-    'warn',
-    'a',
-    {},
+    {
+      severity: 'warn',
+      message: 'a',
+      rawMessage: 'a',
+      args: {},
+    },
     {
       fetchId: '1',
       sessionId: '2',
@@ -288,11 +340,11 @@ test('recordLog populates records string message with params', async () => {
   const client = new CatalystServer(config, () => '1-1-1')
   const recordTime = Timestamp.now()
   client.recordLog(
-    'warn',
-    'test test',
     {
-      test: 1,
-      test2: '2',
+      severity: 'warn',
+      message: 'test test',
+      rawMessage: 'test test test1:1 test2:"2"',
+      args: { test: 1, test2: '2' },
     },
     { fetchId: '1', sessionId: '2' }
   )
@@ -324,6 +376,7 @@ test('recordLog populates records string message with params', async () => {
           ],
           logSeverity: LogSeverity.WARNING_LOG_SEVERITY,
           message: 'test test',
+          rawMessage: 'test test test1:1 test2:"2"',
           stackTrace: undefined,
           time: recordTime,
         },
@@ -339,7 +392,7 @@ test('recordLog populates records string message with params', async () => {
   expect(mockFetch.mock.calls[0][1].headers[PRIVATE_KEY_HEADER]).toBe('key')
 })
 
-test('recordLog populates records error message', async () => {
+test('recordError populates records error message', async () => {
   jest.setSystemTime(new Date(2023, 12, 25))
   const config = {
     baseUrl: 'https://www.example.com',
@@ -350,7 +403,7 @@ test('recordLog populates records error message', async () => {
   const client = new CatalystServer(config, () => '1-1-1')
   const recordTime = Timestamp.now()
   const testErr = new Error('hello')
-  client.recordLog('error', testErr, {}, { fetchId: '1', sessionId: '2' })
+  client.recordError('error', testErr, { fetchId: '1', sessionId: '2' })
   jest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
@@ -363,6 +416,7 @@ test('recordLog populates records error message', async () => {
           id: '1-1-1',
           logSeverity: LogSeverity.ERROR_LOG_SEVERITY,
           message: 'hello',
+          rawMessage: 'hello',
           stackTrace: testErr.stack,
           time: recordTime,
         },

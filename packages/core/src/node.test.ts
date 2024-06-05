@@ -13,6 +13,7 @@ describe('with installNodeBase called', () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const mockFetch = jest.fn((_1, _2) => Promise.resolve(new Response()))
   let recordLogSpy: jest.SpyInstance
+  let recordErrorSpy: jest.SpyInstance
   let oldWarnSpy: jest.SpyInstance
   let oldLogSpy: jest.SpyInstance
   let oldErrorSpy: jest.SpyInstance
@@ -27,6 +28,7 @@ describe('with installNodeBase called', () => {
     // testing harder.
     installNodeBase(config)
     recordLogSpy = jest.spyOn(global.__catalystNodeInstance!, 'recordLog')
+    recordErrorSpy = jest.spyOn(global.__catalystNodeInstance!, 'recordError')
   })
 
   afterEach(() => {
@@ -48,7 +50,7 @@ describe('with installNodeBase called', () => {
     expect(console.__catalystOldLog).not.toBeNull()
   })
 
-  test('installNodeBase console functions creates events', () => {
+  describe('installNodeBase console functions installed correctly', () => {
     const ctx = {
       context: {
         fetchId: '1',
@@ -56,57 +58,88 @@ describe('with installNodeBase called', () => {
       },
     }
 
-    createCatalystContext(ctx, () => {
-      console.log('hi1', 'hi2')
+    test('log', () => {
+      createCatalystContext(ctx, () => {
+        console.log('hi1', 'hi2')
+      })
+
+      expect(recordLogSpy).toHaveBeenCalled()
+      expect(recordLogSpy.mock.calls[0]).toStrictEqual([
+        {
+          severity: 'info',
+          message: 'hi1',
+          rawMessage: 'hi1 hi2',
+          args: { 1: 'hi2' },
+        },
+        ctx.context,
+      ])
+      expect(oldLogSpy).toHaveBeenCalled()
+      expect(oldLogSpy.mock.calls[0]).toStrictEqual(['hi1', 'hi2'])
     })
 
-    expect(recordLogSpy).toHaveBeenCalled()
-    expect(recordLogSpy.mock.calls[0]).toStrictEqual([
-      'info',
-      'hi1',
-      { 1: 'hi2' },
-      ctx.context,
-    ])
-    expect(oldLogSpy).toHaveBeenCalled()
-    expect(oldLogSpy.mock.calls[0]).toStrictEqual(['hi1', 'hi2'])
+    test('warn', () => {
+      createCatalystContext(ctx, () => {
+        console.warn('warn1', 'warn2')
+      })
 
-    jest.resetAllMocks()
-    createCatalystContext(ctx, () => {
-      console.warn('warn1', 'warn2')
+      expect(recordLogSpy).toHaveBeenCalled()
+      expect(recordLogSpy.mock.calls[0]).toStrictEqual([
+        {
+          severity: 'warn',
+          message: 'warn1',
+          rawMessage: 'warn1 warn2',
+          args: { 1: 'warn2' },
+        },
+        ctx.context,
+      ])
+      expect(oldWarnSpy).toHaveBeenCalled()
+      expect(oldWarnSpy.mock.calls[0]).toStrictEqual(['warn1', 'warn2'])
     })
 
-    expect(recordLogSpy).toHaveBeenCalled()
-    expect(recordLogSpy.mock.calls[0]).toStrictEqual([
-      'warn',
-      'warn1',
-      { 1: 'warn2' },
-      ctx.context,
-    ])
-    expect(oldWarnSpy).toHaveBeenCalled()
-    expect(oldWarnSpy.mock.calls[0]).toStrictEqual(['warn1', 'warn2'])
+    test('error', () => {
+      createCatalystContext(ctx, () => {
+        console.error('hi3')
+      })
 
-    jest.resetAllMocks()
-    createCatalystContext(ctx, () => {
-      console.error('hi3')
+      expect(recordLogSpy).toHaveBeenCalled()
+      expect(recordLogSpy.mock.calls[0]).toStrictEqual([
+        { severity: 'error', message: 'hi3', rawMessage: 'hi3', args: {} },
+        ctx.context,
+      ])
+      expect(oldErrorSpy).toHaveBeenCalled()
+      expect(oldErrorSpy.mock.calls[0]).toStrictEqual(['hi3'])
     })
-
-    expect(recordLogSpy).toHaveBeenCalled()
-    expect(recordLogSpy.mock.calls[0]).toStrictEqual([
-      'error',
-      'hi3',
-      {},
-      ctx.context,
-    ])
-    expect(oldErrorSpy).toHaveBeenCalled()
-    expect(oldErrorSpy.mock.calls[0]).toStrictEqual(['hi3'])
   })
 
-  test('installNodeBase console functions do nothing if no context', () => {
+  test('installNodeBase console functions handles no context', () => {
     console.log('test no context', 'hi1')
 
-    expect(recordLogSpy).not.toHaveBeenCalled()
+    expect(recordLogSpy).toHaveBeenCalled()
+    expect(recordLogSpy.mock.calls[0]).toStrictEqual([
+      {
+        severity: 'info',
+        message: 'test no context',
+        rawMessage: 'test no context hi1',
+        args: { 1: 'hi1' },
+      },
+      undefined,
+    ])
     expect(oldLogSpy).toHaveBeenCalled()
     expect(oldLogSpy.mock.calls[0]).toStrictEqual(['test no context', 'hi1'])
+  })
+
+  test('installNodeBase console functions handles errors', () => {
+    const error = new Error('hi')
+    console.log(error)
+
+    expect(recordErrorSpy).toHaveBeenCalled()
+    expect(recordErrorSpy.mock.calls[0]).toStrictEqual([
+      'info',
+      error,
+      undefined,
+    ])
+    expect(oldLogSpy).toHaveBeenCalled()
+    expect(oldLogSpy.mock.calls[0]).toStrictEqual([error])
   })
 
   test('catalystNodeFetch uses context', () => {

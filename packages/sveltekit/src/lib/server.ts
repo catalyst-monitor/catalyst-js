@@ -59,13 +59,16 @@ export const catalystHandler: Handle = async ({ event, resolve }) => {
   const populatedParams = getRouteParams(params)
   const millisDiff = endTime.getTime() - startTime.getTime()
   getCatalystNode().recordFetch(
-    method,
-    pattern,
-    populatedParams,
-    resp.status,
     {
-      seconds: Math.floor(millisDiff / 1000),
-      nanos: (millisDiff % 1000) * 1000000,
+      method,
+      pathPattern: pattern,
+      args: populatedParams,
+      rawPath: url.pathname,
+      statusCode: resp.status,
+      duration: {
+        seconds: Math.floor(millisDiff / 1000),
+        nanos: (millisDiff % 1000) * 1000000,
+      },
     },
     store.context
   )
@@ -77,10 +80,19 @@ export function wrapCatalystServerErrorHandler(
   errorHandler?: HandleServerError
 ): HandleServerError {
   return (input) => {
-    const { error, status } = input
-    const context = getCatalystContext()
-    if (context != null) {
-      getCatalystNode().recordLog('error', error, { status }, context)
+    const { error } = input
+    if (error instanceof Error) {
+      getCatalystNode().recordError('error', error, getCatalystContext())
+    } else {
+      getCatalystNode().recordLog(
+        {
+          severity: 'error',
+          message: '' + error,
+          rawMessage: '' + error,
+          args: {},
+        },
+        getCatalystContext()
+      )
     }
     if (errorHandler != null) {
       errorHandler(input)

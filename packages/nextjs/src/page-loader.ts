@@ -2,7 +2,12 @@ import parser from '@babel/parser'
 import * as t from '@babel/types'
 import generate from '@babel/generator'
 import type * as webpack from 'webpack'
-import { CatalystInitOptions, buildInit, wrapDefaultExport } from './loader.js'
+import {
+  CatalystInitOptions,
+  buildInit,
+  removeFilePath,
+  wrapDefaultExport,
+} from './loader.js'
 
 interface PageLoaderOptions {
   originalPath: string
@@ -31,6 +36,7 @@ export default function loader(
   if (this.resourcePath.startsWith(options.originalPath)) {
     path = path.slice(options.originalPath.length)
   }
+  path = removeFilePath(path)
 
   const ast = parser.parse(source, { sourceType: 'module' })
   const body = ast.program.body

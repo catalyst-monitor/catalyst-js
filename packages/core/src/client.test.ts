@@ -140,9 +140,13 @@ test('recordPageView populates events with params', async () => {
   const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
-  client.recordPageView('/page', {
-    test1: '1',
-    test2: '2',
+  client.recordPageView({
+    rawPath: '/page/1/2',
+    pathPattern: '/page/{test1}/{test2}',
+    args: {
+      test1: '1',
+      test2: '2',
+    },
   })
   jest.advanceTimersByTime(1000)
 
@@ -155,7 +159,8 @@ test('recordPageView populates events with params', async () => {
         value: {
           time: recordTime,
           path: {
-            pattern: '/page',
+            pattern: '/page/{test1}/{test2}',
+            rawPath: '/page/1/2',
             params: [
               {
                 paramName: 'test1',
@@ -193,10 +198,18 @@ test('recordPageView statefully changes pages', async () => {
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
   crypto.randomUUID = () => '1-1-1-1-1'
-  client.recordPageView('/page1', {})
+  client.recordPageView({
+    pathPattern: '/page1',
+    args: {},
+    rawPath: '/page1',
+  })
   client.recordClick('.select', 'text')
   crypto.randomUUID = () => '2-2-2-2-2'
-  client.recordPageView('/page2', {})
+  client.recordPageView({
+    pathPattern: '/page2',
+    args: {},
+    rawPath: '/page2',
+  })
   client.recordClick('.select', 'text')
   jest.advanceTimersByTime(1000)
 
@@ -210,6 +223,7 @@ test('recordPageView statefully changes pages', async () => {
           time: recordTime,
           path: {
             pattern: '/page1',
+            rawPath: '/page1',
           },
         },
       },
@@ -234,6 +248,7 @@ test('recordPageView statefully changes pages', async () => {
           time: recordTime,
           path: {
             pattern: '/page2',
+            rawPath: '/page2',
           },
         },
       },
@@ -310,7 +325,11 @@ test('recordClick populates events while on page', async () => {
   const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
-  client.recordPageView('/page', {})
+  client.recordPageView({
+    rawPath: '/page',
+    pathPattern: '/page',
+    args: {},
+  })
   client.recordClick('.select', 'text')
   jest.advanceTimersByTime(1000)
 
@@ -324,6 +343,7 @@ test('recordClick populates events while on page', async () => {
           time: recordTime,
           path: {
             pattern: '/page',
+            rawPath: '/page',
           },
         },
       },
@@ -359,9 +379,14 @@ test('recordLog populates records string message with params', async () => {
   const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
-  client.recordLog('warn', 'test test', {
-    test: 1,
-    test2: '2',
+  client.recordLog({
+    severity: 'warn',
+    message: 'test test',
+    rawMessage: 'test test test:1 test2:"2"',
+    args: {
+      test: 1,
+      test2: '2',
+    },
   })
   jest.advanceTimersByTime(1000)
 
@@ -391,6 +416,7 @@ test('recordLog populates records string message with params', async () => {
           ],
           logSeverity: LogSeverity.WARNING_LOG_SEVERITY,
           message: 'test test',
+          rawMessage: 'test test test:1 test2:"2"',
           stackTrace: undefined,
           time: recordTime,
         },
@@ -403,7 +429,7 @@ test('recordLog populates records string message with params', async () => {
   expect(mockFetch.mock.calls[0][1].headers[PUBLIC_KEY_HEADER]).toBe('key')
 })
 
-test('recordLog populates records error message', async () => {
+test('recordError populates records error message', async () => {
   jest.setSystemTime(new Date(2023, 12, 25))
   const config = {
     baseUrl: 'https://www.example.com',
@@ -419,7 +445,7 @@ test('recordLog populates records error message', async () => {
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
   const testErr = new Error('hello')
-  client.recordLog('error', testErr, {})
+  client.recordError('error', testErr)
   jest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
@@ -432,6 +458,7 @@ test('recordLog populates records error message', async () => {
           id: crypto.randomUUID(),
           logSeverity: LogSeverity.ERROR_LOG_SEVERITY,
           message: 'hello',
+          rawMessage: 'hello',
           stackTrace: testErr.stack,
           time: recordTime,
         },
@@ -459,8 +486,17 @@ test('recordLog populates events while on page', async () => {
   const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
-  client.recordPageView('/page', {})
-  client.recordLog('warn', 'text', {})
+  client.recordPageView({
+    pathPattern: '/page',
+    args: {},
+    rawPath: '/page',
+  })
+  client.recordLog({
+    severity: 'warn',
+    message: 'text',
+    rawMessage: 'text',
+    args: {},
+  })
   jest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
@@ -473,6 +509,7 @@ test('recordLog populates events while on page', async () => {
           time: recordTime,
           path: {
             pattern: '/page',
+            rawPath: '/page',
           },
         },
       },
@@ -485,6 +522,7 @@ test('recordLog populates events while on page', async () => {
           id: crypto.randomUUID(),
           logSeverity: LogSeverity.WARNING_LOG_SEVERITY,
           message: 'text',
+          rawMessage: 'text',
           time: recordTime,
         },
       },
@@ -519,7 +557,11 @@ test('getFetchHeaders sends current page view ID', () => {
   }
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
-  client.recordPageView('/test', {})
+  client.recordPageView({
+    rawPath: '/test',
+    args: {},
+    pathPattern: '/test',
+  })
 
   expect(client.getFetchHeaders()).toStrictEqual({
     [SESSION_ID_HEADER]: 'asdf',

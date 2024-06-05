@@ -37,6 +37,8 @@
   <a href="/univ-loading/page" data-sveltekit-preload-data={false}
     >Page Universal Loading</a
   >
+  <a href="/dynamic-routes/rest/a/b/c">Dynamic routes (rest param)</a>
+  <a href="/dynamic-routes/single/test-me-param">Dynamic routes (single)</a>
 </div>
 
 <slot />

@@ -5,18 +5,20 @@
   import { browser } from '$app/environment'
 
   if (browser) {
-    const { route, params } = $page
-    getCatalystWeb().recordPageView(
-      route.id ?? 'Unknown',
-      params != null ? getRouteParams(params) : {}
-    )
+    const { route, params, url } = $page
+    getCatalystWeb().recordPageView({
+      rawPath: url.pathname,
+      pathPattern: route.id ?? 'Unknown',
+      args: params != null ? getRouteParams(params) : {},
+    })
   }
 
   $: if ($navigating?.to != null) {
-    const { route, params } = $navigating.to
-    getCatalystWeb().recordPageView(
-      route.id ?? 'Unknown',
-      params != null ? getRouteParams(params) : {}
-    )
+    const { route, params, url } = $navigating.to
+    getCatalystWeb().recordPageView({
+      rawPath: url.pathname,
+      pathPattern: route.id ?? 'Unknown',
+      args: params != null ? getRouteParams(params) : {},
+    })
   }
 </script>

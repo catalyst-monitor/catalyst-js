@@ -8,6 +8,16 @@ export interface CatalystInitOptions {
   baseUrl?: string
 }
 
+export function removeFilePath(filePath: string): string {
+  const replacedPath = filePath
+    .replace(/^\/app/, '')
+    .replace(/\/[^/]+?\.(t|j)sx$/, '')
+  if (replacedPath == '') {
+    return '/'
+  }
+  return replacedPath
+}
+
 export function buildInit(options: CatalystInitOptions): t.ObjectExpression {
   return t.objectExpression(
     Object.entries(options).map(([k, v]) => buildObjectProperty(k, v))

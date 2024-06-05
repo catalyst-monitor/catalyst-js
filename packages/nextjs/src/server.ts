@@ -15,13 +15,12 @@ import {
   RequestStore,
 } from 'next/dist/client/components/request-async-storage.external'
 import { staticGenerationAsyncStorage } from 'next/dist/client/components/static-generation-async-storage.external'
-import { differenceInSeconds } from 'date-fns'
 import { NextRequest } from 'next/dist/server/web/spec-extension/request'
 import { NextResponse } from 'next/dist/server/web/spec-extension/response'
 import { CatalystInitOptions } from './loader'
 
 export function wrapServerPage<
-  T extends { params?: { [key: string]: string } },
+  T extends { params?: { [key: string]: string | Array<string> } },
 >(
   options: CatalystInitOptions,
   pageName: string,
@@ -41,6 +40,37 @@ export function wrapServerPage<
 
     const context = getOrInitContext(store)
     const startTime = new Date()
+
+    const paramsAsStrings: { [key: string]: string } = {}
+    let builtRawPath = pageName
+    if (props.params != null) {
+      for (const [key, value] of Object.entries(props.params)) {
+        if (Array.isArray(value)) {
+          const stringValue = value.join('/')
+          builtRawPath = builtRawPath.replace(
+            new RegExp(`/\\[\\[?...${key}\\]\\]?($|/)`),
+            `/${stringValue}$1`
+          )
+          paramsAsStrings[key] = stringValue
+        } else {
+          builtRawPath = builtRawPath.replace(
+            new RegExp(`/\\[${key}\\]($|/)`),
+            `/${value}$1`
+          )
+          paramsAsStrings[key] = value
+        }
+      }
+    }
+    // Optional rest params are not in the params list if not populated
+    // Replace it with an empty string.
+    builtRawPath = builtRawPath.replace(/\/\[\[...[^\]]+?\]\]$/, '')
+
+    const commonFetchParams = {
+      method: 'get',
+      rawPath: builtRawPath,
+      pathPattern: pageName,
+      args: paramsAsStrings ?? {},
+    }
     return wrapResults(
       context,
       () => component(props),
@@ -49,13 +79,10 @@ export function wrapServerPage<
           return v
         }
         getCatalystNextJS().recordFetch(
-          'get',
-          pageName,
-          props.params ?? {},
-          200,
           {
-            seconds: differenceInSeconds(new Date(), startTime),
-            nanos: 0,
+            ...commonFetchParams,
+            statusCode: 200,
+            duration: durationBetween(startTime, new Date()),
           },
           context
         )
@@ -66,18 +93,27 @@ export function wrapServerPage<
       async (e) => {
         if (isFirstRecordFetch(store)) {
           getCatalystNextJS().recordFetch(
-            'get',
-            pageName,
-            props.params ?? {},
-            500,
             {
-              seconds: differenceInSeconds(new Date(), startTime),
-              nanos: 0,
+              ...commonFetchParams,
+              statusCode: 500,
+              duration: durationBetween(startTime, new Date()),
             },
             context
           )
         }
-        getCatalystNextJS().recordLog('error', e, {}, context)
+        if (e instanceof Error) {
+          getCatalystNextJS().recordError('error', e, context)
+        } else {
+          getCatalystNextJS().recordLog(
+            {
+              severity: 'error',
+              message: '' + e,
+              rawMessage: '' + e,
+              args: {},
+            },
+            context
+          )
+        }
         await getCatalystNextJS().flushEvents()
       }
     )
@@ -106,7 +142,19 @@ export function wrapServerComponent<T>(
       () => component(props),
       (v) => v,
       async (e) => {
-        getCatalystNextJS().recordLog('error', e, {}, context)
+        if (e instanceof Error) {
+          getCatalystNextJS().recordError('error', e, context)
+        } else {
+          getCatalystNextJS().recordLog(
+            {
+              severity: 'error',
+              message: '' + e,
+              rawMessage: '' + e,
+              args: {},
+            },
+            context
+          )
+        }
         await getCatalystNextJS().flushEvents()
       }
     )
@@ -138,6 +186,14 @@ export function wrapRouteHandler(
       fetchId: crypto.randomUUID(),
       pageViewId: req.headers.get(PAGE_VIEW_ID_HEADER) ?? undefined,
     }
+
+    const commonFetchParams = {
+      method,
+      pathPattern: path,
+      rawPath: req.nextUrl.pathname,
+      args: dynamicRouteOptions?.params ?? {},
+    }
+
     const startTime = new Date()
     return wrapResults(
       context,
@@ -148,13 +204,10 @@ export function wrapRouteHandler(
           statusCode = val.status
         }
         getCatalystNextJS().recordFetch(
-          method,
-          path,
-          dynamicRouteOptions?.params ?? {},
-          statusCode,
           {
-            seconds: differenceInSeconds(new Date(), startTime),
-            nanos: 0,
+            ...commonFetchParams,
+            statusCode,
+            duration: durationBetween(startTime, new Date()),
           },
           context
         )
@@ -163,17 +216,26 @@ export function wrapRouteHandler(
       },
       async (e) => {
         getCatalystNextJS().recordFetch(
-          method,
-          path,
-          dynamicRouteOptions?.params ?? {},
-          500,
           {
-            seconds: differenceInSeconds(new Date(), startTime),
-            nanos: 0,
+            ...commonFetchParams,
+            statusCode: 500,
+            duration: durationBetween(startTime, new Date()),
           },
           context
         )
-        getCatalystNextJS().recordLog('error', e, {}, context)
+        if (e instanceof Error) {
+          getCatalystNextJS().recordError('error', e, context)
+        } else {
+          getCatalystNextJS().recordLog(
+            {
+              severity: 'error',
+              message: '' + e,
+              rawMessage: '' + e,
+              args: {},
+            },
+            context
+          )
+        }
         await getCatalystNextJS().flushEvents()
       }
     )
@@ -198,19 +260,27 @@ export function wrapMiddleware(
     }
     const context = getOrInitContext(store)
 
+    const commonFetchParams = {
+      // request.method may be undefined.
+      // Also, while the incoming request may actually not be a get,
+      // there is only one Middleware function, so grouping all
+      // the results together may be better.
+      method: 'get',
+      rawPath: 'Next.JS Middleware',
+      pathPattern: 'Next.JS Middleware',
+      args: {},
+    }
+
     const startTime = new Date()
     return wrapResults(
       context,
       () => mw(request),
       async (r) => {
         getCatalystNextJS().recordFetch(
-          'get',
-          'Next.JS Middleware',
-          {},
-          200,
           {
-            seconds: differenceInSeconds(new Date(), startTime),
-            nanos: 0,
+            ...commonFetchParams,
+            statusCode: 200,
+            duration: durationBetween(startTime, new Date()),
           },
           context
         )
@@ -261,13 +331,10 @@ export function wrapMiddleware(
       },
       async () => {
         getCatalystNextJS().recordFetch(
-          'get',
-          'Next.JS Middleware',
-          {},
-          500,
           {
-            seconds: differenceInSeconds(new Date(), startTime),
-            nanos: 0,
+            ...commonFetchParams,
+            statusCode: 500,
+            duration: durationBetween(startTime, new Date()),
           },
           context
         )
@@ -302,12 +369,17 @@ function installNextJS() {
     crypto.randomUUID()
   )
 
-  installConsoleWrappers(globalThis, (severity, message, params) => {
-    const context = getCatalystContext()
-    if (context != null) {
-      server.recordLog(severity, message, params, context)
-    }
-  })
+  installConsoleWrappers(
+    globalThis,
+    (severity, message, params, rawMessage) => {
+      server.recordLog(
+        { severity, message, rawMessage, args: params },
+        getCatalystContext()
+      )
+    },
+    (severity, error) =>
+      server.recordError(severity, error, getCatalystContext())
+  )
 
   globalThis.__catalystNextJSInstance = server
   return server
@@ -403,6 +475,17 @@ function isFirstRecordFetch(store: ExtendedRequestAsyncStorageType): boolean {
   const isFirst = store.__catalystFetchRecorded != true
   store.__catalystFetchRecorded = true
   return isFirst
+}
+
+function durationBetween(
+  start: Date,
+  end: Date
+): { seconds: number; nanos: number } {
+  const millisDiff = end.getTime() - start.getTime()
+  return {
+    seconds: Math.floor(millisDiff / 1000),
+    nanos: (millisDiff % 1000) * 1000000,
+  }
 }
 
 let globalCatalystOptions: CatalystInitOptions | null = null

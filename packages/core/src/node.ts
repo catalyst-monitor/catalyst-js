@@ -54,12 +54,23 @@ export function installNodeBase(config: CatalystServerConfig): CatalystServer {
 
   const server = new CatalystServer(config, () => crypto.randomUUID())
 
-  installConsoleWrappers(globalThis, (severity, message, params) => {
-    const context = getCatalystContext()
-    if (context != null) {
-      server.recordLog(severity, message, params, context)
+  installConsoleWrappers(
+    globalThis,
+    (severity, message, params, rawMessage) => {
+      server.recordLog(
+        {
+          severity,
+          message,
+          rawMessage,
+          args: params,
+        },
+        getCatalystContext()
+      )
+    },
+    (severity, error) => {
+      server.recordError(severity, error, getCatalystContext())
     }
-  })
+  )
 
   globalThis.__catalystNodeInstance = server
   return server

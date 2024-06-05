@@ -32,6 +32,18 @@ export default function Home() {
         </Link>
       </div>
       <div>
+        <h2>Dynamic rest parameters</h2>
+        <Link className={styles.mainLink} href="/dynamic-rest/optional/a/b/c">
+          Optional rest parameters (populated)
+        </Link>
+        <Link className={styles.mainLink} href="/dynamic-rest/optional">
+          Optional rest parameters (not populated)
+        </Link>
+        <Link className={styles.mainLink} href="/dynamic-rest/required/a/b/c">
+          Required rest parameters
+        </Link>
+      </div>
+      <div>
         <h2>Static pages</h2>
         <Link className={styles.mainLink} href="/stat">
           Try a static page!

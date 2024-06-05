@@ -38,6 +38,16 @@ export function objectToParams(args: {
   )
 }
 
+export type ConsoleLogCallback = (
+  severity: Severity,
+  message: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: { [key: number]: any },
+  rawMessage: string
+) => void
+
+export type ConsoleErrorCallback = (severity: Severity, error: Error) => void
+
 export function installConsoleWrappers(
   instance: {
     console: {
@@ -49,12 +59,8 @@ export function installConsoleWrappers(
       __catalystOldError: typeof console.error | undefined
     }
   },
-  onLog: (
-    severity: Severity,
-    message: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    params: { [key: number]: any }
-  ) => void
+  onLog: ConsoleLogCallback,
+  onError: ConsoleErrorCallback
 ) {
   instance.console.__catalystOldLog = instance.console.log
   instance.console.__catalystOldWarn = instance.console.warn
@@ -63,17 +69,20 @@ export function installConsoleWrappers(
   instance.console.log = buildNewConsoleMethod(
     instance.console.__catalystOldLog,
     'info',
-    onLog
+    onLog,
+    onError
   )
   instance.console.warn = buildNewConsoleMethod(
     instance.console.__catalystOldWarn,
     'warn',
-    onLog
+    onLog,
+    onError
   )
   instance.console.error = buildNewConsoleMethod(
     instance.console.__catalystOldError,
     'error',
-    onLog
+    onLog,
+    onError
   )
 }
 
@@ -81,11 +90,8 @@ function buildNewConsoleMethod(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   old: (...d: any[]) => void,
   severity: Severity,
-  onLog: (
-    severity: Severity,
-    message: string,
-    params: { [key: number]: unknown }
-  ) => void
+  onLog: ConsoleLogCallback,
+  onError: ConsoleErrorCallback
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): (...d: any[]) => void {
   return (...data) => {
@@ -94,11 +100,16 @@ function buildNewConsoleMethod(
       return
     }
     const message = data[0]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const logArgs: { [key: number]: unknown } = {}
-    for (let i = 1; i < data.length; i++) {
-      logArgs[i] = data[i]
+    if (message instanceof Error && data.length == 1) {
+      onError(severity, message)
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const logArgs: { [key: number]: unknown } = {}
+      for (let i = 1; i < data.length; i++) {
+        logArgs[i] = data[i]
+      }
+      const rawMessage = data.join(' ')
+      onLog(severity, message, logArgs, rawMessage)
     }
-    onLog(severity, message, logArgs)
   }
 }

@@ -105,11 +105,21 @@ export class CatalystServer {
   }
 
   recordFetch(
-    method: string,
-    pattern: string,
-    args: { [key: string]: string },
-    statusCode: number,
-    duration: { seconds: number; nanos: number },
+    {
+      method,
+      rawPath,
+      pathPattern,
+      args,
+      statusCode,
+      duration,
+    }: {
+      method: string
+      rawPath: string
+      pathPattern: string
+      args: { [key: string]: string }
+      statusCode: number
+      duration: { seconds: number; nanos: number }
+    },
     context: ServerRequestContext
   ) {
     this.eventQueue.push(
@@ -120,7 +130,8 @@ export class CatalystServer {
           value: new Fetch({
             method: method.toLowerCase(),
             path: {
-              pattern,
+              pattern: pathPattern,
+              rawPath,
               params: objectToParams(args),
             },
             requestDuration: new Duration({
@@ -139,24 +150,39 @@ export class CatalystServer {
     )
   }
 
-  recordLog(
+  recordError(
     severity: Severity,
-    message: unknown,
-    args: { [key: string | number]: string | number },
-    context: ServerRequestContext
+    error: Error,
+    context: ServerRequestContext | undefined
   ) {
-    let messageStr: string
-    let stack: string | null = null
-    if (message instanceof Error) {
-      messageStr = message.message
-      if ('stack' in message) {
-        stack = message.stack ?? null
-      }
-    } else if (typeof message == 'string') {
-      messageStr = message
-    } else {
-      messageStr = '' + message
-    }
+    this.recordLog(
+      {
+        severity,
+        message: error.message,
+        rawMessage: error.message,
+        stackTrace: error.stack,
+        args: {},
+      },
+      context
+    )
+  }
+
+  recordLog(
+    {
+      severity,
+      message,
+      rawMessage,
+      stackTrace,
+      args,
+    }: {
+      severity: Severity
+      message: string
+      rawMessage: string
+      stackTrace?: string
+      args: { [key: string | number]: string | number }
+    },
+    context: ServerRequestContext | undefined
+  ) {
     this.eventQueue.push(
       new SendBackendEventsRequest_Event({
         traceInfo: contextToTrace(context),
@@ -164,8 +190,9 @@ export class CatalystServer {
           case: 'log',
           value: new Log({
             id: this.uuidGenerator(),
-            message: messageStr,
-            stackTrace: stack ?? '',
+            message,
+            rawMessage,
+            stackTrace,
             logSeverity: toProtoSeverity(severity),
             time: Timestamp.now(),
             logArgs: Object.entries(args).map((entry) => {
@@ -201,7 +228,10 @@ export interface ServerRequestContext {
   parentFetchId?: string
 }
 
-function contextToTrace(context: ServerRequestContext): TraceInfo {
+function contextToTrace(context: ServerRequestContext | undefined): TraceInfo {
+  if (context == null) {
+    return new TraceInfo()
+  }
   return new TraceInfo({
     fetchId: context.fetchId,
     sessionId: context.sessionId,

@@ -120,7 +120,15 @@ export class CatalystClient {
     return headers
   }
 
-  recordPageView(pattern: string, args: { [key: string]: string | string[] }) {
+  recordPageView({
+    rawPath,
+    pathPattern,
+    args,
+  }: {
+    rawPath: string
+    pathPattern: string
+    args: { [key: string]: string | string[] }
+  }) {
     this.currentPageViewId = crypto.randomUUID()
     this.eventQueue.push(
       new SendFrontendEventsRequest_Event({
@@ -130,7 +138,8 @@ export class CatalystClient {
           value: new PageView({
             time: Timestamp.now(),
             path: new Path({
-              pattern,
+              rawPath,
+              pattern: pathPattern,
               params: objectToParams(args),
             }),
           }),
@@ -156,23 +165,29 @@ export class CatalystClient {
     )
   }
 
-  recordLog(
-    severity: Severity,
-    message: unknown,
+  recordError(severity: Severity, error: Error) {
+    this.recordLog({
+      severity,
+      message: error.message,
+      rawMessage: error.message,
+      stackTrace: error.stack,
+      args: {},
+    })
+  }
+
+  recordLog({
+    severity,
+    message,
+    rawMessage,
+    stackTrace,
+    args,
+  }: {
+    severity: Severity
+    message: string
+    rawMessage: string
+    stackTrace?: string
     args: { [key: string | number]: string | number }
-  ) {
-    let messageStr: string
-    let stack: string | null = null
-    if (message instanceof Error) {
-      messageStr = message.message
-      if ('stack' in message) {
-        stack = message.stack ?? null
-      }
-    } else if (typeof message == 'string') {
-      messageStr = message
-    } else {
-      messageStr = '' + message
-    }
+  }) {
     this.eventQueue.push(
       new SendFrontendEventsRequest_Event({
         pageViewId: this.currentPageViewId ?? '',
@@ -180,8 +195,9 @@ export class CatalystClient {
           case: 'log',
           value: new Log({
             id: crypto.randomUUID(),
-            message: messageStr,
-            stackTrace: stack ?? '',
+            message,
+            rawMessage,
+            stackTrace: stackTrace ?? '',
             logSeverity: toProtoSeverity(severity),
             time: Timestamp.now(),
             logArgs: Object.entries(args).map((entry) => {

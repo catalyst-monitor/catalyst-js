@@ -32,10 +32,12 @@ export default function Catalyst({
 
       const builtPath = matches.map((m) => m.route.path).join('/')
       // Record the page view in the next frame, so any click handlers will run first.
-      getCatalystWeb().recordPageView(
-        builtPath != '' && location.pathname != '/' ? builtPath : '/',
-        definedParams
-      )
+      getCatalystWeb().recordPageView({
+        rawPath: location.pathname,
+        pathPattern:
+          builtPath != '' && location.pathname != '/' ? builtPath : '/',
+        args: definedParams,
+      })
     }
   }, [location.pathname, routes])
 

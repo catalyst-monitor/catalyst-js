@@ -40,23 +40,38 @@ export const catalystHandler: RequestHandler = (req, res, next) => {
   createCatalystContext(store, () => {
     try {
       res.on('finish', () => {
+        const millisDiff = new Date().getTime() - start.getTime()
+
         getCatalystNode().recordFetch(
-          req.method,
-          req.route?.path ?? 'Unknown',
-          req.params ?? {},
-          res.statusCode,
           {
-            seconds: Math.floor(
-              (new Date().getTime() - start.getTime()) / 1000
-            ),
-            nanos: 0,
+            method: req.method,
+            pathPattern: req.route?.path ?? 'Unknown',
+            rawPath: req.path,
+            args: req.params ?? {},
+            statusCode: res.statusCode,
+            duration: {
+              seconds: Math.floor(millisDiff / 1000),
+              nanos: (millisDiff % 1000) * 1000000,
+            },
           },
           store.context
         )
       })
       next()
     } catch (e) {
-      getCatalystNode().recordLog('error', e, {}, store.context)
+      if (e instanceof Error) {
+        getCatalystNode().recordError('error', e, store.context)
+      } else {
+        getCatalystNode().recordLog(
+          {
+            severity: 'error',
+            args: {},
+            message: '' + e,
+            rawMessage: '' + e,
+          },
+          store.context
+        )
+      }
       throw e
     }
   })

@@ -41,21 +41,25 @@ export default function CatalystClient({
   // Basically, if a param value is ever the same as part of the path,
   // then the unreplaced path will always be wrong.
   useEffect(() => {
-    let rawPath = pathname
+    let builtPath = pathname
     for (const entry of Object.entries(params)) {
       if (Array.isArray(entry[1])) {
-        rawPath = rawPath.replace(
+        builtPath = builtPath.replace(
           new RegExp(`/${entry[1].join('/')}($|/)`),
           `/[...${entry[0]}]$1`
         )
       } else {
-        rawPath = rawPath.replace(
+        builtPath = builtPath.replace(
           new RegExp(`/${entry[1]}($|/)`),
           `/[${entry[0]}]$1`
         )
       }
     }
-    getCatalystWeb().recordPageView(rawPath, params)
+    getCatalystWeb().recordPageView({
+      rawPath: pathname,
+      pathPattern: builtPath,
+      args: params,
+    })
   }, [pathname, params])
 
   return null

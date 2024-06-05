@@ -66,15 +66,19 @@ export function installWebBase(config: CatalystClientConfig): CatalystClient {
   const client = new CatalystClient(config, existing)
   window.__catalystWebInstance = client
 
-  installConsoleWrappers(window, (severity, message, params) => {
-    client.recordLog(severity, message, params)
-  })
+  installConsoleWrappers(
+    window,
+    (severity, message, params, rawMessage) => {
+      client.recordLog({ severity, message, rawMessage, args: params })
+    },
+    (severity, error) => client.recordError(severity, error)
+  )
 
   window.addEventListener('error', (e) => {
-    client.recordLog('error', e.error, {})
+    client.recordError('error', e.error)
   })
   window.addEventListener('unhandledrejection', (e) => {
-    client.recordLog('error', e.reason, {})
+    client.recordError('error', e.reason)
   })
   document.body.addEventListener(
     'click',
