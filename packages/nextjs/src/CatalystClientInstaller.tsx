@@ -26,7 +26,7 @@ export default function CatalystClient({
 
   useLayoutEffect(() => {
     if (sessionId != null) {
-      document.cookie = `${COOKIE_NAME}=${sessionId}; Expires=0; SameSite=Strict`
+      document.cookie = `${COOKIE_NAME}=${sessionId}; Expires=0; SameSite=Strict; Path=/`
     }
     installWebBase({
       systemName,

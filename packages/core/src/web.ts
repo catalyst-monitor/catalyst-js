@@ -60,7 +60,7 @@ export function installWebBase(config: CatalystClientConfig): CatalystClient {
     existing = cookieMatch[1]
   } else {
     existing = crypto.randomUUID()
-    document.cookie = `${COOKIE_NAME}=${existing}; Expires=0; SameSite=Strict`
+    document.cookie = `${COOKIE_NAME}=${existing}; Expires=0; SameSite=Strict; Path=/`
   }
 
   const client = new CatalystClient(config, existing)
