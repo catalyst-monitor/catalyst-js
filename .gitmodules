@@ -1,3 +1,6 @@
-[submodule "proto"]
-	path = proto
-	url = git@github.com:billliu1992/codebase-doctor-proto.git
+[submodule "proto/otlp"]
+	path = proto/otlp
+	url = git@github.com:open-telemetry/opentelemetry-proto.git
+[submodule "proto/common"]
+	path = proto/common
+	url = git@github.com:catalyst-monitor/catalyst-proto.git
