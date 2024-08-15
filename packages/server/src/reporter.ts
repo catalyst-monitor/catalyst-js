@@ -217,7 +217,6 @@ class Reporter {
       if (pageViewId != null) {
         newAttrs[`catalyst.pageViewId`] = pageViewId
       }
-      console.__catalystOldLog!('TEST', pageViewId, sessionId)
     } else {
       newContext = propagation.extract(newContext, headersAsObjects)
     }
