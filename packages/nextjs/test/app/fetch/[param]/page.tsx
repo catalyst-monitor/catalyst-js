@@ -1,8 +1,7 @@
-import { catalystNextJSFetch as cFetch } from '@catalyst-monitor/nextjs'
 import ClientPage from './ClientPage'
 
 export default async function Page({ params }: { params: { param: string } }) {
-  const resp = await cFetch(
+  const resp = await fetch(
     `http://localhost:3000/fetch/${params.param}/testapi`
   )
   const json = await resp.json()

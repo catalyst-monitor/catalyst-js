@@ -1,11 +1,7 @@
-import { NextConfig } from 'next'
+import type { NextConfig } from 'next'
 import path from 'path'
-import { CatalystInitOptions } from './loader'
 
-export function withCatalystConfig(
-  oldConfig: NextConfig,
-  catalystInit: CatalystInitOptions
-): NextConfig {
+export function withCatalystConfig(oldConfig: NextConfig): NextConfig {
   const oldWebpackFn = oldConfig.webpack
   return {
     ...oldConfig,
@@ -27,7 +23,6 @@ export function withCatalystConfig(
           {
             loader: '@catalyst-monitor/nextjs/page-loader',
             options: {
-              catalystInit,
               originalPath: options.dir,
             },
           },
@@ -42,9 +37,6 @@ export function withCatalystConfig(
         use: [
           {
             loader: '@catalyst-monitor/nextjs/component-loader',
-            options: {
-              catalystInit,
-            },
           },
         ],
       })
@@ -58,7 +50,6 @@ export function withCatalystConfig(
           {
             loader: '@catalyst-monitor/nextjs/route-handler-loader',
             options: {
-              catalystInit,
               originalPath: options.dir,
             },
           },
@@ -78,7 +69,6 @@ export function withCatalystConfig(
           {
             loader: '@catalyst-monitor/nextjs/middleware-loader',
             options: {
-              catalystInit,
               originalPath: options.dir,
             },
           },

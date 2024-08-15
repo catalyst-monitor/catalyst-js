@@ -1,12 +1,12 @@
-import { getCatalystWeb } from '@catalyst-monitor/core/web'
+import { default as CatalystWeb } from '@catalyst-monitor/web'
 import React from 'react'
 import { useLayoutEffect } from 'react'
 import {
   Outlet as OutletOrig,
-  RouteObject,
+  type RouteObject,
   matchRoutes,
   useLocation as useLocationOrig,
-} from 'react-router'
+} from 'react-router-dom'
 
 export default function Catalyst({
   routes,
@@ -32,7 +32,7 @@ export default function Catalyst({
 
       const builtPath = matches.map((m) => m.route.path).join('/')
       // Record the page view in the next frame, so any click handlers will run first.
-      getCatalystWeb().recordPageView({
+      CatalystWeb.getReporter().recordPageView({
         rawPath: location.pathname,
         pathPattern:
           builtPath != '' && location.pathname != '/' ? builtPath : '/',

@@ -66,6 +66,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@catalyst-monitor/core": "workspace:^"
+    "@catalyst-monitor/server": "workspace:^",
+    "@catalyst-monitor/web": "workspace:^"
   }
 }

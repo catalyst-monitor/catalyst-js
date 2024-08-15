@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { CatalystInstaller } from '@catalyst-monitor/nextjs/server'
+import { CatalystInstaller } from '@catalyst-monitor/nextjs'
 import styles from './layout.module.css'
 import Link from 'next/link'
 

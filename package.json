@@ -9,7 +9,7 @@
     "build": "yarn workspaces foreach -A --include \"@catalyst-monitor/*\" run build",
     "publishOnly": "yarn workspaces foreach -A --include \"@catalyst-monitor/*\" npm publish --access public",
     "publish": "yarn lint && yarn build && yarn test && yarn publishOnly",
-    "test": "jest"
+    "test": "yarn workspaces foreach -A --include \"@catalyst-monitor/*\" run test"
   },
   "prettier": {
     "trailingComma": "es5",
@@ -19,14 +19,10 @@
   },
   "devDependencies": {
     "@types/eslint": "8.56.0",
-    "@types/jest": "^29.5.11",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "ts-jest": "^29.1.1",
     "typescript": "^5.2.2"
   },
   "packageManager": "yarn@4.0.2"

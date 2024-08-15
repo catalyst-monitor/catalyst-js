@@ -2,16 +2,10 @@ import parser from '@babel/parser'
 import * as t from '@babel/types'
 import generate from '@babel/generator'
 import type * as webpack from 'webpack'
-import {
-  CatalystInitOptions,
-  buildInit,
-  removeFilePath,
-  wrapNamedExports,
-} from './loader.js'
+import { removeFilePath, wrapNamedExports } from './loader.js'
 
 interface RouteHandlerLoaderOptions {
   originalPath: string
-  catalystInit: CatalystInitOptions
 }
 
 const METHODS_TO_WRAP = [
@@ -42,7 +36,6 @@ export default function loader(
 
   const shouldImport = wrapNamedExports(body, METHODS_TO_WRAP, (id, exported) =>
     t.callExpression(wrapIdentifier, [
-      buildInit(options.catalystInit),
       t.stringLiteral(exported),
       t.stringLiteral(path),
       id,
@@ -53,12 +46,11 @@ export default function loader(
     body.unshift(
       t.importDeclaration(
         [t.importSpecifier(wrapIdentifier, wrapIdentifier)],
-        t.stringLiteral('@catalyst-monitor/nextjs/server')
+        t.stringLiteral('@catalyst-monitor/nextjs')
       )
     )
   }
 
-  // @ts-expect-error No idea why Webpack module import is different.
   const generated = generate.default(ast, {}, source).code
   return generated
 }

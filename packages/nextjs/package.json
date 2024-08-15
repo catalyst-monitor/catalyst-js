@@ -1,6 +1,6 @@
 {
   "name": "@catalyst-monitor/nextjs",
-  "version": "0.0.18",
+  "version": "0.1.0",
   "license": "Apache-2.0",
   "files": [
     "/dist"
@@ -12,16 +12,16 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "type": "./dist/index.d.ts"
+      "import": "./dist/index.server.js",
+      "type": "./dist/index.server.d.ts"
+    },
+    "./start": {
+      "import": "./dist/index.start.js",
+      "type": "./dist/index.start.d.ts"
     },
     "./client": {
       "import": "./dist/index.client.js",
       "type": "./dist/index.client.d.ts"
-    },
-    "./server": {
-      "import": "./dist/index.server.js",
-      "type": "./dist/index.server.d.ts"
     },
     "./config": "./dist/nextjs-config.js",
     "./component-loader": "./dist/component-loader.js",
@@ -32,6 +32,15 @@
   "scripts": {
     "build": "rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p .",
     "lint": "prettier --check ./src && eslint ./src"
+  },
+  "peerDependencies": {
+    "next": "^14.2.5",
+    "react": "^18.3.1"
+  },
+  "dependencies": {
+    "@catalyst-monitor/server": "workspace:^",
+    "@catalyst-monitor/web": "workspace:^",
+    "date-fns": "^2.30.0"
   },
   "devDependencies": {
     "@babel/generator": "^7.23.4",
@@ -46,9 +55,9 @@
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "next": "^13.5.4",
+    "next": "^14.2.5",
     "prettier": "^3.0.3",
-    "react": "^18.2.0",
+    "react": "^18.3.1",
     "typescript": "^5.2.2",
     "webpack": "^5.89.0"
   },
@@ -57,9 +66,5 @@
     "tabWidth": 2,
     "semi": false,
     "singleQuote": true
-  },
-  "dependencies": {
-    "@catalyst-monitor/core": "workspace:^",
-    "date-fns": "^2.30.0"
   }
 }

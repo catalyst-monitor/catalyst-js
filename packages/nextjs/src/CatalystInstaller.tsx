@@ -1,20 +1,21 @@
 import React from 'react'
-import CatalystClientInstaller from './CatalystClientInstaller'
-import { getCatalystOptions, getStore, maybeGetContext } from './server'
+import CatalystClientInstaller from './CatalystClientInstaller.js'
+import { getSessionId } from './store.js'
+import { getConfig } from './config.js'
 
 export default function Catalyst() {
-  const store = getStore()
-  const initOptions = getCatalystOptions()
-  if (store == null || initOptions == null) {
+  const config = getConfig()
+  if (config == null) {
+    console.warn('Could not get Catalyst config! Is Catalyst installed?')
     return null
   }
   return (
     <CatalystClientInstaller
-      systemName={`${initOptions?.systemName}-fe`}
-      version={initOptions.version}
-      publicKey={initOptions.publicKey}
-      sessionId={maybeGetContext(store)?.sessionId}
-      baseUrl={initOptions.baseUrl}
+      systemName={`${config.systemName}-fe`}
+      version={config.version}
+      publicKey={config.publicKey}
+      sessionId={getSessionId() ?? undefined}
+      baseUrl={config.clientBaseUrl}
     />
   )
 }

@@ -1,11 +1,7 @@
 'use client'
 
-import {
-  COOKIE_NAME,
-  getCatalystWeb,
-  installWebBase,
-} from '@catalyst-monitor/core/web'
-import { useParams, usePathname } from 'next/navigation'
+import Catalyst from '@catalyst-monitor/web'
+import { useParams, usePathname } from 'next/navigation.js'
 import { useEffect, useLayoutEffect } from 'react'
 
 export default function CatalystClient({
@@ -25,15 +21,13 @@ export default function CatalystClient({
   const params = useParams()
 
   useLayoutEffect(() => {
-    if (sessionId != null) {
-      document.cookie = `${COOKIE_NAME}=${sessionId}; Expires=0; SameSite=Strict; Path=/`
-    }
-    installWebBase({
+    Catalyst.start({
       systemName,
       version,
       userAgent: navigator.userAgent,
       publicKey: publicKey,
       baseUrl,
+      existingSessionId: sessionId,
     })
   }, [baseUrl, publicKey, sessionId, systemName, version])
 
@@ -55,7 +49,7 @@ export default function CatalystClient({
         )
       }
     }
-    getCatalystWeb().recordPageView({
+    Catalyst.getReporter().recordPageView({
       rawPath: pathname,
       pathPattern: builtPath,
       args: params,

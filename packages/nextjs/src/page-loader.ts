@@ -2,16 +2,10 @@ import parser from '@babel/parser'
 import * as t from '@babel/types'
 import generate from '@babel/generator'
 import type * as webpack from 'webpack'
-import {
-  CatalystInitOptions,
-  buildInit,
-  removeFilePath,
-  wrapDefaultExport,
-} from './loader.js'
+import { removeFilePath, wrapDefaultExport } from './loader.js'
 
 interface PageLoaderOptions {
   originalPath: string
-  catalystInit: CatalystInitOptions
 }
 
 export default function loader(
@@ -43,22 +37,17 @@ export default function loader(
 
   const replaced = wrapDefaultExport(body, (newExpr) =>
     t.exportDefaultDeclaration(
-      t.callExpression(wrapIdentifier, [
-        buildInit(options.catalystInit),
-        t.stringLiteral(path),
-        newExpr,
-      ])
+      t.callExpression(wrapIdentifier, [t.stringLiteral(path), newExpr])
     )
   )
   if (replaced) {
     body.unshift(
       t.importDeclaration(
         [t.importSpecifier(wrapIdentifier, wrapIdentifier)],
-        t.stringLiteral('@catalyst-monitor/nextjs/server')
+        t.stringLiteral('@catalyst-monitor/nextjs')
       )
     )
   }
 
-  // @ts-expect-error No idea why Webpack module import is different.
   return generate.default(ast, {}, source).code
 }

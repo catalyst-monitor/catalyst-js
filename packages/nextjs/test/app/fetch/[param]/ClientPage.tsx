@@ -1,6 +1,5 @@
 'use client'
 
-import { catalystNextJSFetch as cFetch } from '@catalyst-monitor/nextjs'
 import { useState } from 'react'
 
 export default function ClientPage({ param }: { param: string }) {
@@ -10,7 +9,7 @@ export default function ClientPage({ param }: { param: string }) {
     <>
       <div
         onClick={async () => {
-          const resp = await cFetch(`/fetch/${param}/testapi`)
+          const resp = await fetch(`/fetch/${param}/testapi`)
           const json = await resp.json()
           setClientResp(json.value)
         }}

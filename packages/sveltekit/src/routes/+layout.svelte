@@ -1,12 +1,12 @@
 <script lang="ts">
   import Catalyst from '$lib/Catalyst.svelte'
-  import { getCatalystWeb } from '$lib/client.js'
+  import { Catalyst as CatalystWeb } from '$lib/client.js'
   import { browser } from '$app/environment'
 
   export let data
 
   if (browser) {
-    getCatalystWeb().setUserInfo(
+    CatalystWeb.getReporter().setUserInfo(
       data.user != null
         ? { loggedInId: data.user.id, loggedInUserName: data.user.userName }
         : null

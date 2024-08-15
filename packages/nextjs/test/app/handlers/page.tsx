@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { catalystNextJSFetch as cFetch } from '@catalyst-monitor/nextjs'
 import styles from './page.module.css'
 
 export default function Page() {
@@ -14,7 +13,7 @@ export default function Page() {
         <button
           className={styles.button}
           onClick={async () => {
-            const resp = await cFetch('/handlers/handler1', { method: 'get' })
+            const resp = await fetch('/handlers/handler1', { method: 'get' })
             const respJson = await resp.json()
             setRespValue(respJson.value)
           }}
@@ -24,7 +23,7 @@ export default function Page() {
         <button
           className={styles.button}
           onClick={async () => {
-            const resp = await cFetch('/handlers/handler1', { method: 'put' })
+            const resp = await fetch('/handlers/handler1', { method: 'put' })
             const respJson = await resp.json()
             setRespValue(respJson.value)
           }}
@@ -34,7 +33,7 @@ export default function Page() {
         <button
           className={styles.button}
           onClick={async () => {
-            const resp = await cFetch('/handlers/handler1', { method: 'post' })
+            const resp = await fetch('/handlers/handler1', { method: 'post' })
             const respJson = await resp.json()
             setRespValue(respJson.value)
           }}
@@ -44,7 +43,7 @@ export default function Page() {
         <button
           className={styles.button}
           onClick={async () => {
-            const resp = await cFetch('/handlers/handler1?error=1', {
+            const resp = await fetch('/handlers/handler1?error=1', {
               method: 'get',
             })
             if (resp.status != 200) {

@@ -1,13 +1,5 @@
 import * as t from '@babel/types'
 
-export interface CatalystInitOptions {
-  systemName: string
-  publicKey: string
-  privateKey: string
-  version: string
-  baseUrl?: string
-}
-
 export function removeFilePath(filePath: string): string {
   const replacedPath = filePath
     .replace(/^\/app/, '')
@@ -16,12 +8,6 @@ export function removeFilePath(filePath: string): string {
     return '/'
   }
   return replacedPath
-}
-
-export function buildInit(options: CatalystInitOptions): t.ObjectExpression {
-  return t.objectExpression(
-    Object.entries(options).map(([k, v]) => buildObjectProperty(k, v))
-  )
 }
 
 export function buildObjectProperty(k: string, v: string): t.ObjectProperty {

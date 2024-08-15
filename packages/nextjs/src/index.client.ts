@@ -1,1 +1,1 @@
-export * from '@catalyst-monitor/core/web'
+export * from '@catalyst-monitor/web'

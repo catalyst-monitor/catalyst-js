@@ -1,2 +1,2 @@
-export { default as Catalyst } from './Catalyst'
-export { wrapRoutes } from './wrapRoutes'
+export { default as Catalyst } from './Catalyst.js'
+export { wrapRoutes } from './wrapRoutes.js'

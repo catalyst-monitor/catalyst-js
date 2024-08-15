@@ -1,10 +1,10 @@
 import React from 'react'
 import {
   Outlet as OutletOrig,
-  RouteObject,
+  type RouteObject,
   useLocation as useLocationOrig,
 } from 'react-router'
-import Catalyst from './Catalyst'
+import Catalyst from './Catalyst.js'
 // import Catalyst from './Catalyst'
 
 export function wrapRoutes(

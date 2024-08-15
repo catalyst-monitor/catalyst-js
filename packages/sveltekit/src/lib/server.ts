@@ -1,14 +1,7 @@
-export * from '@catalyst-monitor/core/node'
+export { default as Catalyst } from '@catalyst-monitor/server'
+export * from '@catalyst-monitor/server'
 import type { Handle, HandleFetch, HandleServerError } from '@sveltejs/kit'
-import {
-  createCatalystContext,
-  getCatalystContext,
-  getCatalystNode,
-  COOKIE_NAME,
-  PAGE_VIEW_ID_HEADER,
-  PARENT_FETCH_ID_HEADER,
-  SESSION_ID_HEADER,
-} from '@catalyst-monitor/core/node'
+import Catalyst, { COOKIE_NAME } from '@catalyst-monitor/server'
 import { getRouteParams } from './util.js'
 
 export const catalystHandler: Handle = async ({ event, resolve }) => {
@@ -19,30 +12,6 @@ export const catalystHandler: Handle = async ({ event, resolve }) => {
     params,
     request: { method, headers },
   } = event
-
-  const store = {
-    context: {
-      sessionId:
-        headers.get(SESSION_ID_HEADER) ??
-        cookies.get(COOKIE_NAME) ??
-        crypto.randomUUID(),
-      parentFetchId: headers.get(PARENT_FETCH_ID_HEADER) ?? undefined,
-      fetchId: crypto.randomUUID(),
-      pageViewId: headers.get(PAGE_VIEW_ID_HEADER) ?? undefined,
-    },
-  }
-
-  if (cookies.get(COOKIE_NAME) == null) {
-    cookies.set(COOKIE_NAME, store.context.sessionId, {
-      path: '/',
-      sameSite: 'strict',
-      httpOnly: false,
-    })
-  }
-
-  const startTime = new Date()
-  const resp = await createCatalystContext(store, () => resolve(event))
-  const endTime = new Date()
 
   let pattern = route.id
   if (pattern != null && method == 'POST') {
@@ -55,25 +24,37 @@ export const catalystHandler: Handle = async ({ event, resolve }) => {
   } else if (pattern == null) {
     pattern = 'Unknown'
   }
-
   const populatedParams = getRouteParams(params)
-  const millisDiff = endTime.getTime() - startTime.getTime()
-  getCatalystNode().recordFetch(
+
+  const builtHeaders: { [key: string]: string } = {}
+  headers.forEach((v, k) => {
+    builtHeaders[v] = k
+  })
+
+  return Catalyst.getReporter().recordServerAction(
     {
       method,
       pathPattern: pattern,
       args: populatedParams,
       rawPath: url.pathname,
-      statusCode: resp.status,
-      duration: {
-        seconds: Math.floor(millisDiff / 1000),
-        nanos: (millisDiff % 1000) * 1000000,
-      },
+      headers: builtHeaders,
+      sessionIdFromCookies: cookies.get(COOKIE_NAME),
     },
-    store.context
-  )
+    async (finish) => {
+      const sessionIdFromContext = Catalyst.getReporter().getSessionId()
+      if (cookies.get(COOKIE_NAME) == null && sessionIdFromContext != null) {
+        cookies.set(COOKIE_NAME, sessionIdFromContext, {
+          path: '/',
+          sameSite: 'strict',
+          httpOnly: false,
+        })
+      }
 
-  return resp
+      const resp = await resolve(event)
+      finish(resp.status)
+      return resp
+    }
+  )
 }
 
 export function wrapCatalystServerErrorHandler(
@@ -82,17 +63,19 @@ export function wrapCatalystServerErrorHandler(
   return (input) => {
     const { error } = input
     if (error instanceof Error) {
-      getCatalystNode().recordError('error', error, getCatalystContext())
-    } else {
-      getCatalystNode().recordLog(
-        {
-          severity: 'error',
-          message: '' + error,
-          rawMessage: '' + error,
-          args: {},
-        },
-        getCatalystContext()
+      Catalyst.getReporter().recordError(
+        'error',
+        error,
+        Catalyst.getReporter().getPropagationHeaders()
       )
+    } else {
+      Catalyst.getReporter().recordLog({
+        severity: 'error',
+        message: '' + error,
+        rawMessage: '' + error,
+        args: {},
+        headers: Catalyst.getReporter().getPropagationHeaders(),
+      })
     }
     if (errorHandler != null) {
       errorHandler(input)
@@ -101,25 +84,18 @@ export function wrapCatalystServerErrorHandler(
 }
 
 export function wrapCatalystFetchHandler(
-  baseUrlsToPropagate: string[],
   fetchHandler?: HandleFetch
 ): HandleFetch {
   return (input) => {
     const { request, fetch } = input
-    const context = getCatalystContext()
-    if (
-      context != null &&
-      (input.event.isSubRequest ||
-        request.url.startsWith('/') ||
-        baseUrlsToPropagate.find((u) => request.url.startsWith(u)))
-    ) {
-      request.headers.set(SESSION_ID_HEADER, context.sessionId)
-      request.headers.set(PARENT_FETCH_ID_HEADER, context.fetchId)
-    }
+
     if (fetchHandler != null) {
-      return fetchHandler(input)
+      return fetchHandler({
+        ...input,
+        fetch: Catalyst.buildFetch(fetch),
+      })
     } else {
-      return fetch(request)
+      return Catalyst.buildFetch(fetch)(request)
     }
   }
 }

@@ -88,6 +88,12 @@ export default function Home() {
           Cause an error in the layout.
         </Link>
       </div>
+      <div>
+        <h2>Logging</h2>
+        <Link className={styles.mainLink} href="/log">
+          Cause a log
+        </Link>
+      </div>
     </main>
   )
 }

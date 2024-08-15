@@ -3,7 +3,7 @@ import {
   SESSION_ID_HEADER,
   objectToParams,
   toProtoSeverity,
-  Severity,
+  type Severity,
   PAGE_VIEW_ID_HEADER,
   DEFAULT_BASE_URL,
   PUBLIC_KEY_HEADER,

@@ -2,8 +2,7 @@ import {
   catalystHandler,
   wrapCatalystFetchHandler,
   wrapCatalystServerErrorHandler,
-  updateCatalystUserInfoContext,
-  installNodeBase,
+  Catalyst,
 } from '$lib/server.js'
 import { sequence } from '@sveltejs/kit/hooks'
 import { COOKIE_NAME, getUserName } from './fakeAuth.server.js'
@@ -14,18 +13,19 @@ import {
 } from '$env/static/public'
 import { CATALYST_PRIVATE_KEY } from '$env/static/private'
 
-installNodeBase({
+Catalyst.start({
   privateKey: CATALYST_PRIVATE_KEY,
   systemName: PUBLIC_CATALYST_SYSTEM_NAME,
   version: PUBLIC_CATALYST_VERSION,
-  baseUrl: 'http://localhost:7070',
+  baseUrl: 'http://localhost:4173',
+  propagateHosts: ['http://localhost:5174'],
 })
 
 export const handleError = wrapCatalystServerErrorHandler(({ error }) => {
   console.error(error)
 })
 
-export const handleFetch = wrapCatalystFetchHandler(['http://localhost:5174'])
+export const handleFetch = wrapCatalystFetchHandler()
 
 const handleFakeAuth: Handle = async ({ event, resolve }) => {
   const resp = await resolve(event)
@@ -34,8 +34,8 @@ const handleFakeAuth: Handle = async ({ event, resolve }) => {
   if (authToken != null) {
     const userName = getUserName(authToken)
     if (userName != null) {
-      updateCatalystUserInfoContext({
-        loggedInUserName: userName,
+      Catalyst.getReporter().setLoggedInUserInfo({
+        loggedInName: userName,
         loggedInId: authToken,
       })
     }

@@ -1,4 +1,4 @@
-import { CatalystClient, CatalystClientConfig } from './client.js'
+import { CatalystClient, type CatalystClientConfig } from './client.js'
 import { COOKIE_NAME, installConsoleWrappers } from './common.js'
 
 export function catalystWebFetch(

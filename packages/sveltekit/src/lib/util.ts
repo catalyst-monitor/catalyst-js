@@ -9,5 +9,3 @@ export function getRouteParams(
   }
   return definedParams
 }
-
-export const PAGE_VIEW_COOKIE_NAME = 'catalystmonitorpage'
