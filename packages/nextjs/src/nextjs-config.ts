@@ -4,6 +4,10 @@ import path from 'path'
 export function withCatalystConfig(oldConfig: NextConfig): NextConfig {
   const oldWebpackFn = oldConfig.webpack
   return {
+    experimental: {
+      ...(oldConfig.experimental ?? {}),
+      instrumentationHook: true,
+    },
     ...oldConfig,
     webpack: (baseWpConfig, options) => {
       const oldWpConfig = oldWebpackFn
