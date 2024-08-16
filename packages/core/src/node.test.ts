@@ -1,3 +1,4 @@
+import type { MockInstance } from 'vitest'
 import { createCatalystContext } from './async_hooks.js'
 import { PARENT_FETCH_ID_HEADER, SESSION_ID_HEADER } from './common.js'
 import { catalystNodeFetch, getCatalystNode, installNodeBase } from './node.js'
@@ -11,28 +12,28 @@ const config = {
 
 describe('with installNodeBase called', () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((_1, _2) => Promise.resolve(new Response()))
-  let recordLogSpy: jest.SpyInstance
-  let recordErrorSpy: jest.SpyInstance
-  let oldWarnSpy: jest.SpyInstance
-  let oldLogSpy: jest.SpyInstance
-  let oldErrorSpy: jest.SpyInstance
+  const mockFetch = vitest.fn((_1, _2) => Promise.resolve(new Response()))
+  let recordLogSpy: MockInstance
+  let recordErrorSpy: MockInstance
+  let oldWarnSpy: MockInstance
+  let oldLogSpy: MockInstance
+  let oldErrorSpy: MockInstance
 
   beforeAll(() => {
     global.fetch = mockFetch
-    oldWarnSpy = jest.spyOn(console, 'warn')
-    oldLogSpy = jest.spyOn(console, 'log')
-    oldErrorSpy = jest.spyOn(console, 'error')
+    oldWarnSpy = vitest.spyOn(console, 'warn')
+    oldLogSpy = vitest.spyOn(console, 'log')
+    oldErrorSpy = vitest.spyOn(console, 'error')
     // Install in beforeAll, because the instance was not meant
     // to be created and torn down multiple times, which makes
     // testing harder.
     installNodeBase(config)
-    recordLogSpy = jest.spyOn(global.__catalystNodeInstance!, 'recordLog')
-    recordErrorSpy = jest.spyOn(global.__catalystNodeInstance!, 'recordError')
+    recordLogSpy = vitest.spyOn(global.__catalystNodeInstance!, 'recordLog')
+    recordErrorSpy = vitest.spyOn(global.__catalystNodeInstance!, 'recordError')
   })
 
   afterEach(() => {
-    jest.resetAllMocks()
+    vitest.resetAllMocks()
   })
 
   afterAll(() => {

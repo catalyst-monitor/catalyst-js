@@ -1,5 +1,5 @@
-import { Path_Param } from './gen/common_pb.js'
-import { LogSeverity } from './gen/library_pb.js'
+import { Path_Param } from './gen/catalyst/common/common_pb.js'
+import { LogSeverity } from './gen/catalyst/common/library_pb.js'
 
 export const PUBLIC_KEY_HEADER = 'X-Catalyst-Public-Key'
 export const PRIVATE_KEY_HEADER = 'X-Catalyst-Private-Key'

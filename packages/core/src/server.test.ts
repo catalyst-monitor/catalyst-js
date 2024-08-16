@@ -8,15 +8,16 @@ import {
   SendBackendEventsRequest,
   SendBackendEventsRequest_Event,
   TraceInfo,
-} from './gen/library_pb.js'
+} from './gen/catalyst/common/library_pb.js'
 import { CatalystServer } from './server.js'
+import type { Mock } from 'vitest'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const mockFetch = jest.fn((_1, _2) => Promise.resolve(new Response()))
+const mockFetch = vitest.fn((_1, _2) => Promise.resolve(new Response()))
 global.fetch = mockFetch
 
 beforeEach(() => {
-  jest.useFakeTimers()
+  vitest.useFakeTimers()
   mockFetch.mockClear()
   mockFetch.mockReset()
 })
@@ -30,7 +31,7 @@ test('flushEvents sends nothing if disabled', async () => {
     disabled: true,
   }
   const client = new CatalystServer(config, () => '1')
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
   client.recordLog(
     {
       severity: 'warn',
@@ -40,7 +41,7 @@ test('flushEvents sends nothing if disabled', async () => {
     },
     { fetchId: '1', sessionId: '1' }
   )
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(0)
 
@@ -57,7 +58,7 @@ test('flushEvents calls and batches events', async () => {
     privateKey: 'key',
   }
   const client = new CatalystServer(config, () => '1')
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   expect(mockFetch).not.toHaveBeenCalled()
 
@@ -79,7 +80,7 @@ test('flushEvents calls and batches events', async () => {
     },
     { fetchId: '1', sessionId: '1' }
   )
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
@@ -89,7 +90,7 @@ test('flushEvents calls and batches events', async () => {
 })
 
 test('flushEvents retries', async () => {
-  jest.setSystemTime(new Date(2020, 2, 2))
+  vitest.setSystemTime(new Date(2020, 2, 2))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -108,12 +109,12 @@ test('flushEvents retries', async () => {
     { fetchId: '1', sessionId: '1' }
   )
   const recordTime = Timestamp.now()
-  await jest.advanceTimersByTimeAsync(1000)
+  await vitest.advanceTimersByTimeAsync(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
   mockFetch.mockClear()
-  await jest.advanceTimersByTimeAsync(3000)
+  await vitest.advanceTimersByTimeAsync(3000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
   const req = await extractRequest(mockFetch)
@@ -151,12 +152,12 @@ test('flushEvents retries with max event count', async () => {
   }
   const recordTime = Timestamp.now()
   mockFetch.mockImplementationOnce(() => Promise.reject(new Error('hi')))
-  await jest.advanceTimersByTimeAsync(1000)
+  await vitest.advanceTimersByTimeAsync(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
   mockFetch.mockClear()
-  await jest.advanceTimersByTimeAsync(3000)
+  await vitest.advanceTimersByTimeAsync(3000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
   const req = await extractRequest(mockFetch)
@@ -202,7 +203,7 @@ test('recordFetch correctly populates context', async () => {
       loggedInId: 'id',
     }
   )
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
@@ -228,7 +229,7 @@ test('recordFetch correctly populates context', async () => {
 })
 
 test('recordFetch correctly sends event', async () => {
-  jest.setSystemTime(new Date(2020, 2, 2))
+  vitest.setSystemTime(new Date(2020, 2, 2))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -254,7 +255,7 @@ test('recordFetch correctly sends event', async () => {
     }
   )
   const recordTime = Timestamp.now()
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
@@ -303,7 +304,7 @@ test('recordLog correctly populates context', async () => {
       loggedInId: 'id',
     }
   )
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
@@ -329,7 +330,7 @@ test('recordLog correctly populates context', async () => {
 })
 
 test('recordLog populates records string message with params', async () => {
-  jest.setSystemTime(new Date(2023, 12, 25))
+  vitest.setSystemTime(new Date(2023, 12, 25))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -348,7 +349,7 @@ test('recordLog populates records string message with params', async () => {
     },
     { fetchId: '1', sessionId: '2' }
   )
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
 
@@ -393,7 +394,7 @@ test('recordLog populates records string message with params', async () => {
 })
 
 test('recordError populates records error message', async () => {
-  jest.setSystemTime(new Date(2023, 12, 25))
+  vitest.setSystemTime(new Date(2023, 12, 25))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -404,7 +405,7 @@ test('recordError populates records error message', async () => {
   const recordTime = Timestamp.now()
   const testErr = new Error('hello')
   client.recordError('error', testErr, { fetchId: '1', sessionId: '2' })
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
 
@@ -431,7 +432,7 @@ test('recordError populates records error message', async () => {
   expect(mockFetch).toHaveBeenCalledTimes(1)
 })
 
-async function extractRequest(mockFn: jest.Mock) {
+async function extractRequest(mockFn: Mock) {
   const body = mockFn.mock.calls[0][1].body
   return SendBackendEventsRequest.fromBinary(new Uint8Array(body))
 }

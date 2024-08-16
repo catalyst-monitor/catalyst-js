@@ -8,7 +8,7 @@ import {
   DEFAULT_BASE_URL,
   PUBLIC_KEY_HEADER,
 } from './common.js'
-import { Path } from './gen/common_pb.js'
+import { Path } from './gen/catalyst/common/common_pb.js'
 import {
   Click,
   Log,
@@ -16,7 +16,7 @@ import {
   PageView,
   SendFrontendEventsRequest,
   SendFrontendEventsRequest_Event,
-} from './gen/library_pb.js'
+} from './gen/catalyst/common/library_pb.js'
 
 export interface CatalystClientConfig {
   baseUrl?: string

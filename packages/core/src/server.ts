@@ -4,7 +4,7 @@ import {
   PARENT_FETCH_ID_HEADER,
   PRIVATE_KEY_HEADER,
   SESSION_ID_HEADER,
-  Severity,
+  type Severity,
   objectToParams,
   toProtoSeverity,
 } from './common.js'
@@ -15,7 +15,7 @@ import {
   SendBackendEventsRequest,
   SendBackendEventsRequest_Event,
   TraceInfo,
-} from './gen/library_pb.js'
+} from './gen/catalyst/common/library_pb.js'
 
 export interface CatalystServerConfig {
   baseUrl?: string

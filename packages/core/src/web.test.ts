@@ -1,7 +1,8 @@
 /**
- * @jest-environment ../../../jest.fixjsdom.ts
+ * @vitest-environment jsdom
  */
 
+import type { MockInstance } from 'vitest'
 import {
   COOKIE_NAME,
   PAGE_VIEW_ID_HEADER,
@@ -14,16 +15,19 @@ const config = {
   version: '1',
 }
 
+const randomUuidVal = '123-123-123-123-123'
+const oldRandomUuid = crypto.randomUUID
+
+beforeAll(() => {
+  crypto.randomUUID = () => randomUuidVal
+})
+
+afterAll(() => {
+  crypto.randomUUID = oldRandomUuid
+})
+
 describe('installWebBase cookies', () => {
-  const randomUuidVal = '123-123-123-123-123'
-  const oldRandomUuid = crypto.randomUUID
-
-  beforeAll(() => {
-    crypto.randomUUID = () => randomUuidVal
-  })
-
   afterAll(() => {
-    crypto.randomUUID = oldRandomUuid
     document.cookie = `${COOKIE_NAME}=; Max-Age=-9999999`
   })
 
@@ -64,19 +68,19 @@ test("getCatalystWeb fails when installWebBase hasn't been called", () => {
 
 describe('web', () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((_1, _2) => Promise.resolve(new Response()))
-  let recordLogSpy: jest.SpyInstance
-  let recordClickSpy: jest.SpyInstance
-  let recordErrorSpy: jest.SpyInstance
-  let oldWarnSpy: jest.SpyInstance
-  let oldLogSpy: jest.SpyInstance
-  let oldErrorSpy: jest.SpyInstance
+  const mockFetch = vitest.fn((_1, _2) => Promise.resolve(new Response()))
+  let recordLogSpy: MockInstance
+  let recordClickSpy: MockInstance
+  let recordErrorSpy: MockInstance
+  let oldWarnSpy: MockInstance
+  let oldLogSpy: MockInstance
+  let oldErrorSpy: MockInstance
 
   beforeAll(() => {
     global.fetch = mockFetch
-    oldWarnSpy = jest.spyOn(console, 'warn')
-    oldLogSpy = jest.spyOn(console, 'log')
-    oldErrorSpy = jest.spyOn(console, 'error')
+    oldWarnSpy = vitest.spyOn(console, 'warn')
+    oldLogSpy = vitest.spyOn(console, 'log')
+    oldErrorSpy = vitest.spyOn(console, 'error')
     document.cookie = `${COOKIE_NAME}=test123test123; Expires=0`
     // Install in beforeAll, because the instance was not meant
     // to be created and torn down multiple times, which makes
@@ -87,13 +91,13 @@ describe('web', () => {
       rawPath: '/test',
       args: {},
     })
-    recordLogSpy = jest.spyOn(client, 'recordLog')
-    recordClickSpy = jest.spyOn(client, 'recordClick')
-    recordErrorSpy = jest.spyOn(client, 'recordError')
+    recordLogSpy = vitest.spyOn(client, 'recordLog')
+    recordClickSpy = vitest.spyOn(client, 'recordClick')
+    recordErrorSpy = vitest.spyOn(client, 'recordError')
   })
 
   afterEach(() => {
-    jest.resetAllMocks()
+    vitest.resetAllMocks()
   })
 
   afterAll(() => {
@@ -303,7 +307,7 @@ describe('web', () => {
   })
 })
 
-// Polyfill required for Jest
+// Polyfill required for vitest
 // https://github.com/jsdom/jsdom/issues/2401
 class PromiseRejectionEvent<T> extends Event {
   public readonly promise: Promise<T>

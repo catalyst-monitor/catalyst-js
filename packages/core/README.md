@@ -1,23 +1,14 @@
-# @catalyst-monitor/nextjs
+# @catalyst-monitor/core
 
-This is the core library for [Catalyst](https://www.catalystmonitor.com). It contains the base business logic for recording and handling data to send to Catalyst for both server and client environments.
+## This library is deprecated
 
-The best way to instrument this library is to use a framework specific library that handles instrumentation neatly for you. Please check out the [https://www.catalystmonitor.com/docs](docs) to find installation instructions for your framework.
+Just want to install Catalyst? Check out the up-to-date information at [https://www.catalystmonitor.com/docs](https://www.catalystmonitor.com/docs).
 
-## Developing
+## Migration
 
-### Building
+Please migrate to `@catalyst-monitor/web` and/or `@catalyst-monitor/server` for the client and server respectively.
 
-To build the library:
+- `@catalyst-monitor/web`: https://github.com/catalyst-monitor/catalyst-js/tree/main/packages/web
+- `@catalyst-monitor/server`: https://github.com/catalyst-monitor/catalyst-js/tree/main/packages/server
 
-```bash
-yarn build
-```
-
-### Testing
-
-To test the library:
-
-```bash
-yarn test
-```
+Both feature a nicer interface, while `@catalyst-monitor/server` uses OpenTelemetry and can easily be used with tools other than Catalyst.

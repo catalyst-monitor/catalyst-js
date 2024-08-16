@@ -1,5 +1,5 @@
 /**
- * @jest-environment ../../../jest.fixjsdom.ts
+ * @vitest-environment jsdom
  */
 
 import { CatalystClient } from './client.js'
@@ -8,18 +8,29 @@ import {
   LogSeverity,
   SendFrontendEventsRequest,
   SendFrontendEventsRequest_Event,
-} from './gen/library_pb.js'
+} from './gen/catalyst/common/library_pb.js'
 import {
   PAGE_VIEW_ID_HEADER,
   PUBLIC_KEY_HEADER,
   SESSION_ID_HEADER,
 } from './common.js'
 import { Timestamp } from '@bufbuild/protobuf'
+import type { Mock } from 'vitest'
 
-jest.useFakeTimers()
+vitest.useFakeTimers()
+
+const oldRandomUuid = crypto.randomUUID
+
+beforeAll(() => {
+  crypto.randomUUID = () => '1-1-1-1-1'
+})
+
+afterAll(() => {
+  crypto.randomUUID = oldRandomUuid
+})
 
 afterEach(() => {
-  jest.restoreAllMocks()
+  vitest.restoreAllMocks()
 })
 
 test('flushEvents sends nothing if disabled', async () => {
@@ -33,11 +44,11 @@ test('flushEvents sends nothing if disabled', async () => {
   }
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
-  const mockFetch = jest.fn(() => Promise.resolve(new Response()))
+  const mockFetch = vitest.fn(() => Promise.resolve(new Response()))
   window.fetch = mockFetch
 
   client.recordClick('a', 'a')
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(0)
 
@@ -56,15 +67,15 @@ test('flushEvents calls and batches events', async () => {
   }
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
-  const mockFetch = jest.fn(() => Promise.resolve(new Response()))
+  const mockFetch = vitest.fn(() => Promise.resolve(new Response()))
   window.fetch = mockFetch
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   expect(mockFetch).not.toHaveBeenCalled()
 
   client.recordClick('a', 'a')
   client.recordClick('a', 'a')
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
@@ -83,14 +94,14 @@ test('flushEvents failing does not generate events', () => {
   }
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
-  const mockFetch = jest.fn(() => Promise.resolve(Response.error()))
+  const mockFetch = vitest.fn(() => Promise.resolve(Response.error()))
   window.fetch = mockFetch
   client.recordClick('a', 'a')
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
-  jest.advanceTimersByTime(3000)
+  vitest.advanceTimersByTime(3000)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 })
@@ -106,10 +117,10 @@ test('flushEvents populates metadata', async () => {
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
+  const mockFetch = vitest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   client.recordClick('a', 'a')
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
 
@@ -126,7 +137,7 @@ test('flushEvents populates metadata', async () => {
 })
 
 test('recordPageView populates events with params', async () => {
-  jest.setSystemTime(new Date(2023, 12, 25))
+  vitest.setSystemTime(new Date(2023, 12, 25))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -137,7 +148,7 @@ test('recordPageView populates events with params', async () => {
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
+  const mockFetch = vitest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
   client.recordPageView({
@@ -148,7 +159,7 @@ test('recordPageView populates events with params', async () => {
       test2: '2',
     },
   })
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
 
@@ -183,7 +194,7 @@ test('recordPageView populates events with params', async () => {
 })
 
 test('recordPageView statefully changes pages', async () => {
-  jest.setSystemTime(new Date(2023, 12, 25))
+  vitest.setSystemTime(new Date(2023, 12, 25))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -194,7 +205,7 @@ test('recordPageView statefully changes pages', async () => {
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
+  const mockFetch = vitest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
   crypto.randomUUID = () => '1-1-1-1-1'
@@ -211,7 +222,7 @@ test('recordPageView statefully changes pages', async () => {
     rawPath: '/page2',
   })
   client.recordClick('.select', 'text')
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
 
@@ -273,7 +284,7 @@ test('recordPageView statefully changes pages', async () => {
 })
 
 test('recordClick populates events while not on page', async () => {
-  jest.setSystemTime(new Date(2023, 12, 25))
+  vitest.setSystemTime(new Date(2023, 12, 25))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -284,11 +295,11 @@ test('recordClick populates events while not on page', async () => {
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
+  const mockFetch = vitest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
   client.recordClick('.select', 'text')
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
 
@@ -311,7 +322,7 @@ test('recordClick populates events while not on page', async () => {
 })
 
 test('recordClick populates events while on page', async () => {
-  jest.setSystemTime(new Date(2023, 12, 25))
+  vitest.setSystemTime(new Date(2023, 12, 25))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -322,7 +333,7 @@ test('recordClick populates events while on page', async () => {
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
+  const mockFetch = vitest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
   client.recordPageView({
@@ -331,7 +342,7 @@ test('recordClick populates events while on page', async () => {
     args: {},
   })
   client.recordClick('.select', 'text')
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
 
@@ -365,7 +376,7 @@ test('recordClick populates events while on page', async () => {
 })
 
 test('recordLog populates records string message with params', async () => {
-  jest.setSystemTime(new Date(2023, 12, 25))
+  vitest.setSystemTime(new Date(2023, 12, 25))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -376,7 +387,7 @@ test('recordLog populates records string message with params', async () => {
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
+  const mockFetch = vitest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
   client.recordLog({
@@ -388,7 +399,7 @@ test('recordLog populates records string message with params', async () => {
       test2: '2',
     },
   })
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
 
@@ -430,7 +441,7 @@ test('recordLog populates records string message with params', async () => {
 })
 
 test('recordError populates records error message', async () => {
-  jest.setSystemTime(new Date(2023, 12, 25))
+  vitest.setSystemTime(new Date(2023, 12, 25))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -441,12 +452,12 @@ test('recordError populates records error message', async () => {
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
+  const mockFetch = vitest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
   const testErr = new Error('hello')
   client.recordError('error', testErr)
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
 
@@ -472,7 +483,7 @@ test('recordError populates records error message', async () => {
 })
 
 test('recordLog populates events while on page', async () => {
-  jest.setSystemTime(new Date(2023, 12, 25))
+  vitest.setSystemTime(new Date(2023, 12, 25))
   const config = {
     baseUrl: 'https://www.example.com',
     version: '123',
@@ -483,7 +494,7 @@ test('recordLog populates events while on page', async () => {
   const sessionId = 'asdf'
   const client = new CatalystClient(config, sessionId)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFetch = jest.fn((url, data) => Promise.resolve(new Response()))
+  const mockFetch = vitest.fn((url, data) => Promise.resolve(new Response()))
   window.fetch = mockFetch
   const recordTime = Timestamp.now()
   client.recordPageView({
@@ -497,7 +508,7 @@ test('recordLog populates events while on page', async () => {
     rawMessage: 'text',
     args: {},
   })
-  jest.advanceTimersByTime(1000)
+  vitest.advanceTimersByTime(1000)
 
   const req = await extractRequest(mockFetch)
 
@@ -569,7 +580,7 @@ test('getFetchHeaders sends current page view ID', () => {
   })
 })
 
-async function extractRequest(mockFn: jest.Mock) {
+async function extractRequest(mockFn: Mock) {
   const body = mockFn.mock.calls[0][1].body
   return SendFrontendEventsRequest.fromBinary(new Uint8Array(body))
 }

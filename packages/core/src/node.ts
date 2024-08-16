@@ -1,4 +1,4 @@
-import { CatalystServer, CatalystServerConfig } from './server.js'
+import { CatalystServer, type CatalystServerConfig } from './server.js'
 import { installConsoleWrappers } from './common.js'
 import { getCatalystContext } from './async_hooks.js'
 import crypto from 'crypto'
