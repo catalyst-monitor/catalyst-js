@@ -25,5 +25,5 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "typescript": "^5.2.2"
   },
-  "packageManager": "yarn@4.0.2"
+  "packageManager": "yarn@4.4.0"
 }

@@ -9,7 +9,6 @@ import {
   afterEach,
   expect,
   type MockInstance,
-  beforeEach,
 } from 'vitest'
 import {
   COOKIE_NAME,
