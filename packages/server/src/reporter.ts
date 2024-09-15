@@ -33,7 +33,10 @@ class Reporter {
   }
 
   getSessionId(): string | null {
-    return trace.getSpanContext(context.active())?.traceId ?? null
+    return (
+      propagation.getActiveBaggage()?.getEntry('catalyst.sessionId')?.value ??
+      null
+    )
   }
 
   getPropagationHeaders(): { [key: string]: string } {
@@ -166,7 +169,10 @@ class Reporter {
     const [severityNumber, severityText] = severityToProto(severity)
 
     logs.getLogger('catalyst-javascript', '0.0.1').emit({
-      attributes: paramAttrs,
+      attributes: {
+        paramAttrs,
+        ...propagated.attributes,
+      },
       body: logBody,
       observedTimestamp: now,
       timestamp: now,
@@ -202,34 +208,28 @@ class Reporter {
       headersAsObjects = Object.fromEntries(headers.entries())
     }
 
-    const sessionId = getFirstHeaderValue(headersAsObjects, SESSION_ID_HEADER)
-    if (sessionId != null) {
-      newContext = trace.setSpanContext(newContext, {
-        traceFlags: 1,
-        traceId: sessionId,
-        spanId: this.newId(8),
-        isRemote: true,
-      })
-      const pageViewId = getFirstHeaderValue(
-        headersAsObjects,
-        PAGE_VIEW_ID_HEADER
-      )
-      if (pageViewId != null) {
-        newAttrs[`catalyst.pageViewId`] = pageViewId
-      }
-    } else {
-      newContext = propagation.extract(newContext, headersAsObjects)
-    }
-    if (
-      trace.getSpanContext(newContext)?.isRemote != true &&
-      sessionIdFromCookies != null
-    ) {
-      newContext = trace.setSpanContext(oldContext, {
-        traceFlags: 1,
-        traceId: sessionIdFromCookies,
-        spanId: this.newId(8),
-        isRemote: true,
-      })
+    newContext = propagation.extract(newContext, headersAsObjects)
+    const baggage =
+      propagation.getBaggage(newContext) ?? propagation.createBaggage()
+
+    const sessionId =
+      baggage.getEntry('catalyst.sessionId')?.value ??
+      getFirstHeaderValue(headersAsObjects, SESSION_ID_HEADER) ??
+      sessionIdFromCookies ??
+      this.newId(16)
+    newAttrs['catalyst.sessionId'] = sessionId
+
+    newContext = propagation.setBaggage(
+      newContext,
+      baggage.setEntry('catalyst.sessionId', { value: sessionId })
+    )
+
+    const pageViewId = getFirstHeaderValue(
+      headersAsObjects,
+      PAGE_VIEW_ID_HEADER
+    )
+    if (pageViewId != null) {
+      newAttrs['catalyst.pageViewId'] = pageViewId
     }
 
     return {

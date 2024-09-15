@@ -10,6 +10,9 @@ export function installGlobalFetch(
   reporter: Reporter,
   options: PropagationOptions
 ) {
+  if (globalThis.__catalystOldFetch != null) {
+    return
+  }
   globalThis.__catalystOldFetch = globalThis.fetch
   globalThis.fetch = wrapFetch(reporter, globalThis.fetch, options)
 }

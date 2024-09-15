@@ -22,6 +22,13 @@ export function installConsoleWrappers(
   onLog: ConsoleLogCallback,
   onError: ConsoleErrorCallback
 ) {
+  if (
+    globalThis.console.__catalystOldLog != null &&
+    globalThis.console.__catalystOldWarn != null &&
+    globalThis.console.__catalystOldError != null
+  ) {
+    return
+  }
   globalThis.console.__catalystOldLog = globalThis.console.log
   globalThis.console.__catalystOldWarn = globalThis.console.warn
   globalThis.console.__catalystOldError = globalThis.console.error
