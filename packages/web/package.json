@@ -1,6 +1,6 @@
 {
   "name": "@catalyst-monitor/web",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "Apache-2.0",
   "files": [
     "/dist"
@@ -13,7 +13,7 @@
     "proto": "rm -rf src/gen/ && mkdir -p src/gen/ && yarn buf generate",
     "lint": "eslint src/**/*",
     "build": "yarn proto && yarn lint && rm -rf dist && rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json",
-    "test": "yarn vitest"
+    "test": "yarn vitest run"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.34.0",
