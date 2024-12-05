@@ -30,7 +30,23 @@ export default function Catalyst({
           .map((e) => [e[0], e[1]!])
       )
 
-      const builtPath = matches.map((m) => m.route.path).join('/')
+      // Each match can be a relative path, or an absolute path.
+      // If relative, just append to the previous.
+      // If absolute, use as the new path.
+      const builtPath = matches.reduce((acc, curr) => {
+        const path = curr.route.path
+        if (path == null) {
+          return acc
+        }
+        if (path.startsWith(acc)) {
+          return path
+        }
+        if (acc.endsWith('/')) {
+          return `${acc}${path}`
+        } else {
+          return `${acc}/${path}`
+        }
+      }, '')
       // Record the page view in the next frame, so any click handlers will run first.
       CatalystWeb.getReporter().recordPageView({
         rawPath: location.pathname,
